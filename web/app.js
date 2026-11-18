@@ -23,7 +23,7 @@ const S = {
   prompt: "", title: "", lyrics: "", writing: false, instrumental: false,
   genre: "", mood: "", voice: "", tempo: "",
   audioWeight: 0.7, styleWeight: 0.6, weirdness: 0.3,
-  audioB64: null, photoURL: null,
+  audioB64: null, audioUrl: null, photoURL: null,
   coins: 3, isPro: localStorage.getItem("is_pro") === "true",
   userId: localStorage.getItem("sb_user_id"),
   accessToken: localStorage.getItem("sb_access_token"),
@@ -150,7 +150,7 @@ function studio(){
         <button class="ghost" onclick="writeLyrics()">${S.writing?tr("writing"):"✨ "+tr("write_for_me")}</button></div>
       <textarea placeholder="${esc(tr("lyrics_ph"))}" oninput="S.lyrics=this.value">${esc(S.lyrics)}</textarea>
     </div>`:""}
-    <label class="upload" style="margin:12px 0;display:block">${S.audioB64?tr("clip_ready"):tr("upload_audio")}
+    <label class="upload" style="margin:12px 0;display:block">${(S.audioB64||S.audioUrl)?tr("clip_ready"):tr("upload_audio")}
       <input type="file" accept="audio/*,video/mp4,video/quicktime,.mp4,.m4a,.wav,.mp3" class="hidden" onchange="onAudio(this)"></label>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0">
       <span>${tr("instrumental")}</span>
@@ -177,7 +177,7 @@ function cover(){
   return `<h1 class="h-title">${tr("tab_cover")}</h1>
     <p class="muted">${esc(tr("ob3_sub"))}</p>
     <div class="inputbox" style="margin:12px 0"><input type="text" placeholder="${esc(tr("prompt_ph_simple").split("\\n")[0])}" value="${esc(S.prompt)}" oninput="S.prompt=this.value"></div>
-    <label class="upload">${S.audioB64?tr("clip_ready"):tr("upload_audio")}
+    <label class="upload">${(S.audioB64||S.audioUrl)?tr("clip_ready"):tr("upload_audio")}
       <input type="file" accept="audio/*,video/mp4,video/quicktime,.mp4,.m4a,.wav,.mp3" class="hidden" onchange="onAudio(this)"></label>
     <div class="optgrid" style="margin:16px 0">
       ${voices.map(([e,n])=>`<div class="opt ${S.voice===n?"set":""}" onclick="S.voice='${n}';render()">${e}<div class="val">${n}</div></div>`).join("")}
@@ -383,24 +383,61 @@ function encodeWavMono(buffer, maxSec=45, sampleRate=16000){
   v.setUint32(28,sampleRate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
   w(36,"data"); v.setUint32(40,bytes,true);
   new Uint8Array(wav,44).set(new Uint8Array(pcm.buffer));
-  let bin=""; const u8=new Uint8Array(wav);
+  return new Uint8Array(wav);
+}
+function wavToB64(u8){
+  let bin="";
   for(let i=0;i<u8.length;i+=0x8000) bin+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));
   return btoa(bin);
+}
+async function uploadCoverWav(bytes){
+  await signInAnon();
+  if(!S.userId) throw new Error("Sign-in failed");
+  const path=S.userId+"/"+uid()+".wav";
+  const put=await fetch(CFG.supabaseURL+"/storage/v1/object/covers/"+path,{
+    method:"POST",
+    headers:{apikey:CFG.supabaseAnonKey,Authorization:"Bearer "+S.accessToken,"Content-Type":"audio/wav","x-upsert":"true"},
+    body:bytes,
+  });
+  const putText=await put.text();
+  if(!put.ok) throw new Error(putText.includes("Bucket not found")||put.status===400||put.status===404?"NO_BUCKET":(putText.slice(0,180)||"upload failed"));
+  const sign=await fetch(CFG.supabaseURL+"/storage/v1/object/sign/covers/"+path,{
+    method:"POST",
+    headers:{apikey:CFG.supabaseAnonKey,Authorization:"Bearer "+S.accessToken,"Content-Type":"application/json"},
+    body:JSON.stringify({expiresIn:86400}),
+  });
+  const so=await sign.json();
+  const rel=so.signedURL||so.signedUrl;
+  if(!rel) throw new Error("Could not sign clip");
+  return CFG.supabaseURL+"/storage/v1"+(rel.startsWith("/")?rel:"/"+rel);
 }
 window.onAudio=async(inp)=>{
   const f=inp.files&&inp.files[0]; if(!f) return;
   toast("Reading clip…");
+  S.audioB64=null; S.audioUrl=null;
   try{
     const buf=await f.arrayBuffer();
     const ctx=new (window.AudioContext||window.webkitAudioContext)();
     const decoded=await ctx.decodeAudioData(buf.slice(0));
     await ctx.close();
-    S.audioB64=encodeWavMono(decoded);
-    toast(tr("clip_ready")+" (45s max, audio only)");
+    const dur=decoded.duration||0;
+    const full=encodeWavMono(decoded, Math.min(480, Math.ceil(dur)+1));
+    try{
+      S.audioUrl=await uploadCoverWav(full);
+      S.audioB64=null;
+      toast(tr("clip_ready")+" · full song uploaded");
+    }catch(up){
+      const short=encodeWavMono(decoded, 45);
+      S.audioB64=wavToB64(short);
+      S.audioUrl=null;
+      toast(String(up.message)==="NO_BUCKET"
+        ? "Storage bucket missing. Using 45s clip. Run supabase/cover-upload.sql."
+        : tr("clip_ready")+" (45s fallback)");
+    }
     render();
   }catch(e){
-    S.audioB64=null;
-    toast("Couldn't read audio from that file. Export mp3 or m4a, or a short clip.");
+    S.audioB64=null; S.audioUrl=null;
+    toast("Couldn't read audio from that file. Export mp3 or m4a.");
     render();
   }
 };
@@ -428,11 +465,12 @@ window.mint=async()=>{
     const body={
       prompt:(S.prompt||"").trim()||(m+" "+g+" song"),
       style:g, mood:m, tempo:S.tempo, voice:S.voice, title,
-      instrumental:S.instrumental, kind:S.audioB64?"cover":"song",
+      instrumental:S.instrumental, kind:(S.audioB64||S.audioUrl)?"cover":"song",
       audioWeight:S.audioWeight, styleWeight:S.styleWeight, weirdness:S.weirdness,
     };
     if(!S.instrumental&&S.lyrics) body.lyrics=S.lyrics;
-    if(S.audioB64) body.audioBase64=S.audioB64;
+    if(S.audioUrl) body.audioUrl=S.audioUrl;
+    else if(S.audioB64) body.audioBase64=S.audioB64;
     const start=await api("/functions/v1/mint",{method:"POST",body});
     if(start.obj.paywall){ S.generating=false; S.screen="paywall"; render(); return; }
     const jobId=start.obj.jobId; if(!jobId) throw new Error(start.obj.error||start.obj.detail||start.obj.message||("mint failed ("+start.status+")"));
@@ -440,13 +478,13 @@ window.mint=async()=>{
     results.forEach((v,i)=>{
       S.library.unshift({
         id:uid(), title:v.title||title, meta:g+" · "+m,
-        badge:S.audioB64?"◆ Cover":"◆ Minted",
+        badge:(S.audioB64||S.audioUrl)?"◆ Cover":"◆ Minted",
         audioURL:v.audioURL, img:S.photoURL||v.imageURL, imageURL:S.photoURL||v.imageURL,
         providerAudioId:v.audioId, jobId, liked:false, lyrics:S.lyrics||"",
         take:i===0?"A":"B",
       });
     });
-    saveLib(); S.current=S.library[0]; S.audioB64=null;
+    saveLib(); S.current=S.library[0]; S.audioB64=null; S.audioUrl=null;
     await refreshCredits();
     S.generating=false; S.progress=100; S.showPlayer=true; playAudio(S.current); render();
   }catch(e){ S.generating=false; toast(e.message||String(e)); render(); }

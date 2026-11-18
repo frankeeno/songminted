@@ -6,7 +6,7 @@ values (
   'covers',
   'covers',
   false,
-  52428800,
+  104857600,
   array['audio/wav','audio/mpeg','audio/mp4','audio/x-m4a','video/mp4']
 )
 on conflict (id) do update

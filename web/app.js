@@ -382,7 +382,7 @@ function encodeWavMono(buffer, maxSec=45, sampleRate=16000){
   v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,sampleRate,true);
   v.setUint32(28,sampleRate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
   w(36,"data"); v.setUint32(40,bytes,true);
-  new Uint8Array(wav,44).set(new Uint8Array(pcm.buffer));
+  new Uint8Array(wav,44).set(new Uint8Array(pcm.buffer, pcm.byteOffset, pcm.byteLength));
   return new Uint8Array(wav);
 }
 function wavToB64(u8){
@@ -390,17 +390,29 @@ function wavToB64(u8){
   for(let i=0;i<u8.length;i+=0x8000) bin+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));
   return btoa(bin);
 }
-async function uploadCoverWav(bytes){
+function extFor(file){
+  const n=(file.name||"").toLowerCase();
+  if(n.endsWith(".mp3")||file.type==="audio/mpeg") return {ext:"mp3", mime:"audio/mpeg"};
+  if(n.endsWith(".m4a")||n.endsWith(".aac")||file.type==="audio/mp4"||file.type==="audio/x-m4a") return {ext:"m4a", mime:"audio/mp4"};
+  if(n.endsWith(".wav")||file.type==="audio/wav") return {ext:"wav", mime:"audio/wav"};
+  return {ext:"wav", mime:"audio/wav"};
+}
+async function uploadCoverBytes(bytes, mime, ext){
   await signInAnon();
   if(!S.userId) throw new Error("Sign-in failed");
-  const path=S.userId+"/"+uid()+".wav";
+  const path=S.userId+"/"+uid()+"."+ext;
   const put=await fetch(CFG.supabaseURL+"/storage/v1/object/covers/"+path,{
     method:"POST",
-    headers:{apikey:CFG.supabaseAnonKey,Authorization:"Bearer "+S.accessToken,"Content-Type":"audio/wav","x-upsert":"true"},
+    headers:{apikey:CFG.supabaseAnonKey,Authorization:"Bearer "+S.accessToken,"Content-Type":mime,"x-upsert":"true"},
     body:bytes,
   });
   const putText=await put.text();
-  if(!put.ok) throw new Error(putText.includes("Bucket not found")||put.status===400||put.status===404?"NO_BUCKET":(putText.slice(0,180)||"upload failed"));
+  if(!put.ok){
+    const low=putText.toLowerCase();
+    if(putText.includes("Bucket not found")||put.status===404) throw new Error("NO_BUCKET");
+    if(put.status===413||low.includes("too large")||low.includes("maximum allowed size")||low.includes("payload")) throw new Error("TOO_LARGE");
+    throw new Error(putText.slice(0,180)||"upload failed");
+  }
   const sign=await fetch(CFG.supabaseURL+"/storage/v1/object/sign/covers/"+path,{
     method:"POST",
     headers:{apikey:CFG.supabaseAnonKey,Authorization:"Bearer "+S.accessToken,"Content-Type":"application/json"},
@@ -415,31 +427,40 @@ window.onAudio=async(inp)=>{
   const f=inp.files&&inp.files[0]; if(!f) return;
   toast("Reading clip…");
   S.audioB64=null; S.audioUrl=null;
+  let decoded=null;
   try{
+    const meta=extFor(f);
+    const isVideo=/video|mp4|quicktime/i.test(f.type+" "+f.name);
     const buf=await f.arrayBuffer();
     const ctx=new (window.AudioContext||window.webkitAudioContext)();
-    const decoded=await ctx.decodeAudioData(buf.slice(0));
+    decoded=await ctx.decodeAudioData(buf.slice(0));
     await ctx.close();
-    const dur=decoded.duration||0;
-    const full=encodeWavMono(decoded, Math.min(480, Math.ceil(dur)+1));
-    try{
-      S.audioUrl=await uploadCoverWav(full);
-      S.audioB64=null;
-      toast(tr("clip_ready")+" · full song uploaded");
-    }catch(up){
-      const short=encodeWavMono(decoded, 45);
-      S.audioB64=wavToB64(short);
-      S.audioUrl=null;
-      toast(String(up.message)==="NO_BUCKET"
-        ? "Storage bucket missing. Using 45s clip. Run supabase/cover-upload.sql."
-        : tr("clip_ready")+" (45s fallback)");
+    const compact=encodeWavMono(decoded, 120, 16000);
+    let uploaded=false;
+    if(!isVideo && f.size<=12*1024*1024){
+      try{
+        S.audioUrl=await uploadCoverBytes(new Uint8Array(buf), meta.mime, meta.ext);
+        uploaded=true;
+        toast(tr("clip_ready")+" · original uploaded");
+      }catch(e){ if(String(e.message)==="NO_BUCKET") throw e; }
     }
-    render();
+    if(!uploaded){
+      S.audioUrl=await uploadCoverBytes(compact, "audio/wav", "wav");
+      toast(tr("clip_ready")+" · 2 min audio uploaded");
+    }
+    S.audioB64=null;
   }catch(e){
-    S.audioB64=null; S.audioUrl=null;
-    toast("Couldn't read audio from that file. Export mp3 or m4a.");
-    render();
+    const msg=String(e.message||e);
+    if(decoded){
+      S.audioB64=wavToB64(encodeWavMono(decoded, 45));
+      S.audioUrl=null;
+      toast(msg==="TOO_LARGE"?"File was too big. Using first 45s.":tr("clip_ready")+" (45s)");
+    }else{
+      S.audioB64=null; S.audioUrl=null;
+      toast(msg==="TOO_LARGE"?"File too large. Use an mp3/m4a under 12MB.":"Couldn't read that file. Use mp3 or m4a.");
+    }
   }
+  render();
 };
 window.onPhoto=(inp)=>{ const f=inp.files&&inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ S.photoURL=r.result; toast(tr("change_photo")); render(); }; r.readAsDataURL(f); };
 

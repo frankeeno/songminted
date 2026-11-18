@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Song Minted AI</title>
+<style>
+:root{
+  --bg:#05070a;
+  --panel:#0d1117;
+  --panel2:#131a22;
+  --panel3:#1a232e;
+  --stroke:#212c38;
+  --txt:#f2f6f8;
+  --muted:#7d8c99;
+  --muted2:#4c5966;
+  --emerald:#34d399;
+  --teal:#12b3a6;
+  --gold:#f5c451;
+  --gold2:#e0a83a;
+  --rose:#ff6b8b;
+  --grad:linear-gradient(135deg,#34d399,#0ea5a4);
+  --grad-gold:linear-gradient(135deg,#f7d270,#e0a83a);
+  --grad-btn:linear-gradient(135deg,#3ee0a6,#0ea5a4);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;
+  background:radial-gradient(1200px 800px at 50% -10%,#0c221f,#030406 60%);
+  display:flex;align-items:center;justify-content:center;min-height:100vh;color:var(--txt);padding:24px;
+}
+.device{position:relative;width:390px;height:844px;border-radius:54px;background:#000;
+  box-shadow:0 0 0 12px #12161a,0 0 0 14px #232a30,0 40px 90px rgba(0,0,0,.7);overflow:hidden}
+.notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:126px;height:32px;background:#000;border-radius:20px;z-index:50}
+.statusbar{position:absolute;top:0;left:0;right:0;height:54px;z-index:40;display:flex;align-items:center;
+  justify-content:space-between;padding:16px 30px 0;font-size:15px;font-weight:600;pointer-events:none}
+.statusbar .r{display:flex;gap:7px;align-items:center;font-size:13px}
+.screen{position:absolute;inset:0;background:var(--bg);overflow-y:auto;overflow-x:hidden;display:none;
+  flex-direction:column;padding-top:54px;-webkit-overflow-scrolling:touch}
+.screen.active{display:flex}
+.screen::-webkit-scrollbar{width:0}
+.pad{padding:0 20px}
+
+/* top bar */
+.appbar{display:flex;align-items:center;justify-content:space-between;padding:8px 20px 6px}
+.logo{display:flex;align-items:center;gap:9px}
+.gem{width:30px;height:30px;position:relative;display:flex;align-items:center;justify-content:center;
+  background:var(--grad-gold);border-radius:9px;transform:rotate(45deg);box-shadow:0 4px 14px rgba(245,196,81,.4)}
+.gem span{transform:rotate(-45deg);font-size:15px}
+.logo .wm{font-weight:800;font-size:20px;letter-spacing:-.3px;line-height:1}
+.logo .wm b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo .wm sup{font-size:9px;color:var(--gold);font-weight:800;margin-left:3px}
+.logo .wm small{display:block;font-size:9px;color:var(--muted);letter-spacing:3px;font-weight:700;margin-top:2px}
+.topgap{display:flex;gap:8px}
+.pill{border:1px solid #2a3a34;border-radius:20px;padding:7px 12px;font-size:14px;font-weight:800;
+  display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,.08)}
+.pill .coin{color:var(--gold)}
+.pill.pro{background:var(--grad-gold);color:#241a05;border:none}
+
+/* buttons */
+.btn{border:none;border-radius:40px;padding:18px;font-size:18px;font-weight:800;color:#04231d;
+  background:var(--grad-btn);width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  gap:10px;box-shadow:0 10px 30px rgba(18,179,166,.35)}
+.btn:active{transform:scale(.98)}
+.btn.gold{background:var(--grad-gold);color:#241a05;box-shadow:0 10px 30px rgba(224,168,58,.35)}
+.btn.ghost{background:var(--panel3);color:#fff;box-shadow:none}
+.chip{background:var(--panel2);border:1px solid var(--stroke);border-radius:20px;padding:10px 18px;
+  font-size:15px;font-weight:600;color:#c3ccd4;cursor:pointer;white-space:nowrap}
+.chip.active{background:var(--emerald);color:#04231d;border-color:transparent}
+
+/* segmented */
+.seg{display:flex;background:var(--panel);border:1px solid var(--stroke);border-radius:30px;padding:5px;margin:14px 0}
+.seg button{flex:1;border:none;background:transparent;color:#c3ccd4;font-size:16px;font-weight:700;
+  padding:13px;border-radius:24px;cursor:pointer;transition:.2s}
+.seg button.on{background:var(--grad);color:#04231d}
+.seg button.on-gold{background:var(--grad-gold);color:#241a05}
+
+/* bottom nav */
+.tabbar{position:absolute;bottom:0;left:0;right:0;height:88px;z-index:30;background:rgba(5,7,10,.9);
+  backdrop-filter:blur(18px);border-top:1px solid #131a20;display:flex;justify-content:space-around;
+  align-items:flex-start;padding-top:12px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:var(--muted2);cursor:pointer;flex:1}
+.tab svg{width:25px;height:25px;stroke:var(--muted2);fill:none;stroke-width:1.8}
+.tab.active{color:#fff}
+.tab.active svg{stroke:var(--emerald)}
+.hidefab{padding-bottom:100px}
+
+/* cards / inputs */
+.card{background:var(--panel);border:1px solid var(--stroke);border-radius:22px;padding:16px}
+.inputbox{background:var(--panel);border:1px solid #1d4a44;border-radius:20px;padding:18px;min-height:150px;position:relative}
+textarea,.inputbox input{width:100%;background:transparent;border:none;color:#fff;font-size:17px;line-height:1.5;
+  resize:none;outline:none;font-family:inherit}
+textarea{min-height:120px}
+textarea::placeholder,input::placeholder{color:#5a6773}
+.dice{position:absolute;right:14px;bottom:14px;width:52px;height:52px;border-radius:16px;background:var(--grad-gold);
+  display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;border:none}
+
+.advrow{display:flex;justify-content:space-between;align-items:center;margin:18px 2px 12px}
+.advrow .lbl{color:var(--muted);font-weight:800;font-size:13px;letter-spacing:1px}
+.toggle{width:52px;height:30px;border-radius:20px;background:#26313b;position:relative;cursor:pointer;transition:.2s}
+.toggle .knob{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+.toggle.on{background:var(--emerald)}
+.toggle.on .knob{left:25px}
+.optgrid{display:flex;gap:12px}
+.opt{flex:1;background:var(--panel);border:1px solid var(--stroke);border-radius:18px;padding:16px 6px 10px;
+  text-align:center;cursor:pointer;transition:.15s}
+.opt.set{border-color:var(--emerald);background:rgba(52,211,153,.1)}
+.opt .ic{font-size:24px;margin-bottom:8px}
+.opt .nm{font-size:12px;font-weight:800;color:var(--muted)}
+.opt .val{font-size:11px;color:var(--emerald);font-weight:800;margin-top:2px;min-height:13px}
+
+/* bottom sheet */
+.sheet-wrap{position:absolute;inset:0;z-index:60;display:none}
+.sheet-wrap.open{display:block}
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#0b1218;border-radius:28px 28px 0 0;padding:14px 20px 130px;
+  max-height:82%;overflow-y:auto;transform:translateY(100%);transition:.3s cubic-bezier(.2,.8,.2,1)}
+.sheet::-webkit-scrollbar{width:0}
+.sheet-wrap.open .sheet{transform:translateY(0)}
+.grab{width:44px;height:5px;border-radius:3px;background:#2c3a44;margin:2px auto 14px}
+.sheet h3{text-align:center;font-size:22px;margin-bottom:20px}
+.emojigrid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 10px}
+.emojicell{text-align:center;cursor:pointer}
+.emojicell .circ{width:88px;height:88px;border-radius:24px;background:#141c24;display:flex;align-items:center;
+  justify-content:center;font-size:38px;margin:0 auto 8px;border:2px solid transparent;transition:.15s}
+.emojicell.sel .circ{border-color:var(--emerald);background:rgba(52,211,153,.12)}
+.emojicell .lab{font-size:14px;font-weight:700}
+.searchbar{background:#141c24;border-radius:14px;padding:14px 16px;display:flex;gap:10px;align-items:center;
+  color:var(--muted);font-size:16px;margin-bottom:20px}
+.sheet-apply{position:absolute;left:20px;right:20px;bottom:24px}
+.vgender{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:8px}
+.vcell{text-align:center;cursor:pointer}
+.vcell .circ{width:80px;height:80px;border-radius:50%;background:#141c24;display:flex;align-items:center;
+  justify-content:center;font-size:34px;margin:0 auto 8px;position:relative;border:2px solid transparent}
+.vcell.sel .circ{border-color:var(--emerald)}
+.lock{position:absolute;right:-2px;bottom:-2px;width:26px;height:26px;border-radius:50%;background:#1a232e;
+  display:flex;align-items:center;justify-content:center;font-size:12px}
+.sect-lbl{font-size:19px;font-weight:800;margin:22px 0 14px}
+.aivgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.aiv{text-align:center}
+.aiv .av{width:92px;height:92px;border-radius:22px;margin:0 auto 6px;position:relative;background-size:cover;
+  background-position:center;border:2px solid #232c36}
+.aiv .star{position:absolute;top:-6px;right:4px;font-size:18px}
+.aiv .nm{font-size:12px;font-weight:600;color:#c9d2d9}
+.addvoice{width:72px;height:72px;border-radius:22px;background:var(--grad-gold);display:flex;align-items:center;
+  justify-content:center;font-size:34px;color:#241a05;margin:0 auto 8px}
+
+/* onboarding */
+#onboard{padding-top:0;background:#000}
+.ob-slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:flex-end}
+.ob-slide.active{display:flex}
+.ob-hero{position:absolute;inset:0;background-size:cover;background-position:center}
+.ob-fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,4,6,.1) 25%,rgba(3,4,6,.6) 55%,#03040a 88%)}
+.ob-inner{position:relative;padding:0 28px 40px;z-index:2}
+.ob-badge{text-align:center;margin-bottom:16px}
+.ob-badge .n{font-size:32px;font-weight:800}
+.ob-badge .t{font-size:14px;font-weight:800;letter-spacing:1px;color:#cdd6dc}
+.ob-badge .st{color:var(--gold);font-size:19px;letter-spacing:4px}
+.ob-inner h1{font-size:37px;font-weight:800;line-height:1.05;margin-bottom:16px}
+.ob-inner h1 em{font-style:normal;background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ob-inner p{color:#bcc7ce;font-size:18px;line-height:1.35;margin-bottom:24px}
+.dots{display:flex;gap:8px;justify-content:center;margin-bottom:22px}
+.dots i{width:9px;height:9px;border-radius:50%;background:#3a4650}
+.dots i.on{background:var(--emerald);width:11px;height:11px}
+
+/* paywall */
+#paywall{background:#000;padding-top:0}
+.pw-hero{height:42%;background-size:cover;background-position:center;position:relative}
+.pw-hero .ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,4,10,.2),#03040a)}
+.pw-x{position:absolute;top:60px;left:20px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.45);
+  border:1px solid #3a4650;color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;z-index:5;cursor:pointer}
+.pw-crown{position:absolute;top:calc(42% - 42px);left:50%;transform:translateX(-50%);z-index:4;text-align:center}
+.pw-crown .gem{width:64px;height:64px;border-radius:20px;font-size:30px;margin:0 auto}
+.pw-body{padding:36px 22px 0;text-align:center}
+.pw-body h2{font-size:28px;font-weight:800;margin-bottom:8px}
+.pw-body h2 em{font-style:normal;color:var(--gold)}
+.pw-body .sub{color:var(--muted);font-size:16px;line-height:1.35;margin-bottom:18px}
+.feats{text-align:left;max-width:260px;margin:0 auto 20px;display:flex;flex-direction:column;gap:12px}
+.feats div{display:flex;gap:12px;align-items:center;font-size:16px;font-weight:600}
+.feats .ck{color:var(--emerald);font-weight:900}
+.plans{display:flex;gap:12px;margin-bottom:14px}
+.plan{flex:1;border:1.5px solid var(--stroke);border-radius:18px;padding:18px 8px;position:relative;cursor:pointer}
+.plan.sel{border-color:var(--emerald);background:rgba(52,211,153,.08)}
+.plan .tag{position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;
+  padding:4px 10px;border-radius:12px;white-space:nowrap;color:#04231d}
+.plan .tag.pop{background:var(--emerald)}
+.plan .tag.off{background:var(--grad-gold);color:#241a05}
+.plan .dur{font-size:19px;font-weight:800}
+.plan .pr{font-size:18px;font-weight:800;margin-top:8px}
+.plan .pr.mut{color:var(--muted)}
+.plan .wk{background:var(--emerald);color:#04231d;border-radius:12px;padding:8px 4px;margin-top:10px;font-size:14px;font-weight:800}
+.plan .wk small{display:block;font-size:11px;font-weight:600}
+.plan .once{font-size:12px;color:var(--muted)}
+.pw-note{color:#c3ccd4;font-size:13px;margin:4px 0 14px}
+.pw-links{display:flex;justify-content:space-between;font-size:13px;color:#c3ccd4;font-weight:600;padding:14px 6px 0}
+
+/* generating */
+#gen{background:radial-gradient(700px 500px at 50% 32%,#0d322c,#04060a);align-items:center;justify-content:center;text-align:center}
+.mint-coin{width:130px;height:130px;border-radius:50%;background:var(--grad-gold);display:flex;align-items:center;
+  justify-content:center;font-size:52px;margin:0 auto 30px;position:relative;animation:flip 1.6s ease-in-out infinite;
+  box-shadow:0 0 60px rgba(245,196,81,.45)}
+@keyframes flip{0%,100%{transform:rotateY(0)}50%{transform:rotateY(180deg)}}
+.eq{display:flex;gap:6px;height:56px;align-items:flex-end;justify-content:center;margin-bottom:26px}
+.eq i{width:8px;background:var(--grad);border-radius:4px;animation:bounce 1s ease-in-out infinite}
+@keyframes bounce{0%,100%{height:14px}50%{height:54px}}
+.genpct{font-size:50px;font-weight:800}
+.genlbl{color:#bcc7ce;font-size:18px;margin-top:6px}
+
+/* player */
+#player{background:#000;align-items:center;padding-top:54px}
+.pl-top{display:flex;justify-content:space-between;width:100%;padding:8px 20px 0;font-size:22px}
+.pl-art{width:300px;height:300px;border-radius:26px;margin:24px 0 22px;background-size:cover;background-position:center;
+  box-shadow:0 20px 60px rgba(18,179,166,.35);position:relative;overflow:hidden}
+.pl-art .badge{position:absolute;top:12px;right:12px;background:var(--grad-gold);color:#241a05;border-radius:14px;padding:6px 12px;font-size:13px;font-weight:800}
+.pl-title{font-size:26px;font-weight:800}
+.pl-meta{color:var(--muted);font-size:15px;margin:6px 0 22px}
+.pl-bar{width:280px;height:6px;background:#20303a;border-radius:3px;position:relative;margin-bottom:8px}
+.pl-bar .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--emerald);border-radius:3px}
+.pl-bar .head{position:absolute;top:-4px;width:14px;height:14px;border-radius:50%;background:#fff;left:0;transform:translateX(-7px)}
+.pl-times{display:flex;justify-content:space-between;width:280px;color:var(--muted);font-size:13px;margin-bottom:20px}
+.pl-ctrls{display:flex;align-items:center;gap:34px;margin-bottom:26px}
+.pl-ctrls .pp{width:78px;height:78px;border-radius:50%;background:var(--grad-btn);color:#04231d;display:flex;
+  align-items:center;justify-content:center;font-size:30px;cursor:pointer;box-shadow:0 10px 30px rgba(18,179,166,.4)}
+.pl-ctrls .sk{font-size:26px;color:#c3ccd4;cursor:pointer}
+.pl-actions{display:flex;gap:14px}
+.pl-actions .a{background:var(--panel2);border:1px solid var(--stroke);border-radius:30px;padding:14px 24px;
+  font-size:16px;font-weight:700;display:flex;gap:8px;align-items:center;cursor:pointer}
+
+/* vault / library */
+.songrow{display:flex;gap:14px;align-items:center;padding:12px 0}
+.songrow .th{width:74px;height:74px;border-radius:16px;background-size:cover;background-position:center;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px}
+.songrow .info{flex:1;min-width:0}
+.songrow .info .t{font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.songrow .info .m{color:var(--muted);font-size:14px;margin:3px 0 6px}
+.songrow .info .badge{display:inline-block;background:var(--panel3);border-radius:12px;padding:4px 10px;font-size:12px;color:#aeb8c0}
+.songrow .dots{font-size:22px;color:var(--muted)}
+.create-row{display:flex;gap:14px;align-items:center;padding:14px 0}
+.create-row .sq{width:80px;height:80px;border-radius:18px;background:var(--grad);display:flex;align-items:center;
+  justify-content:center;font-size:34px;color:#04231d}
+.profcard{background:linear-gradient(120deg,#123a34,#0d2e3a);border-radius:20px;padding:18px 20px;display:flex;
+  justify-content:space-between;align-items:center;margin:14px 0}
+.profcard .arrow{width:36px;height:36px;border-radius:50%;border:1.5px solid #fff8;display:flex;align-items:center;justify-content:center}
+
+/* generic sections */
+.h-title{font-size:26px;font-weight:800;display:flex;align-items:center;gap:10px;margin:16px 0 14px}
+.tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tpl{height:160px;border-radius:20px;padding:20px;display:flex;flex-direction:column;justify-content:center;
+  align-items:center;gap:12px;font-size:18px;font-weight:800;text-align:center;cursor:pointer;background-size:cover;
+  background-position:center;position:relative;overflow:hidden}
+.tpl .ic{font-size:28px}
+.tabscroll{display:flex;gap:10px;overflow-x:auto;padding:4px 0 6px}
+.tabscroll::-webkit-scrollbar{height:0}
+.voicecard{background:linear-gradient(110deg,#0d2e3a,#0a1e28);border-radius:16px;padding:20px;display:flex;
+  justify-content:space-between;align-items:center;font-size:19px;font-weight:800;margin-bottom:14px}
+.voicerow{display:flex;align-items:center;gap:16px;background:var(--panel);border:1px solid var(--stroke);
+  border-radius:16px;padding:12px;margin-bottom:12px}
+.voicerow .ph{width:70px;height:70px;border-radius:12px;background-size:cover;background-position:center}
+.upload-box{border:1.5px dashed #2c3a44;border-radius:20px;height:160px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;color:#c3ccd4;font-size:18px;font-weight:700;cursor:pointer;margin:10px 0}
+.upload-box .ic{width:52px;height:52px;border:2px solid #c3ccd4;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px}
+
+/* explore feed */
+.feedcard{border-radius:22px;overflow:hidden;position:relative;height:210px;margin-bottom:16px;background-size:cover;
+  background-position:center;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end}
+.feedcard .fov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 40%,rgba(0,0,0,.82))}
+.feedcard .fbody{position:relative;padding:16px 18px;display:flex;justify-content:space-between;align-items:flex-end}
+.feedcard .ft{font-size:19px;font-weight:800}
+.feedcard .fm{font-size:13px;color:#c3ccd4;margin-top:4px;display:flex;gap:12px}
+.feedcard .fplay{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.16);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid #ffffff40}
+.feedcard .genretag{position:absolute;top:14px;left:14px;background:rgba(0,0,0,.45);border:1px solid #ffffff30;
+  border-radius:12px;padding:5px 12px;font-size:12px;font-weight:700}
+
+.toast{position:absolute;bottom:110px;left:50%;transform:translateX(-50%) translateY(20px);background:#141c24;
+  border:1px solid #26313b;color:#fff;padding:12px 20px;border-radius:30px;font-size:14px;font-weight:600;opacity:0;
+  transition:.3s;z-index:70;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.fab{position:absolute;right:18px;bottom:104px;background:var(--grad-btn);color:#04231d;border-radius:30px;
+  padding:14px 22px;font-size:17px;font-weight:800;display:flex;gap:8px;align-items:center;z-index:25;cursor:pointer;
+  box-shadow:0 10px 30px rgba(18,179,166,.4)}
+</style>
+</head>
+<body>
+<div class="device">
+  <div class="notch"></div>
+  <div class="statusbar"><span>16:53</span>
+    <span class="r">••• &nbsp;📶 &nbsp;<span style="background:#34d399;color:#000;border-radius:5px;padding:1px 5px;font-size:11px">96</span></span></div>
+
+  <!-- ONBOARDING -->
+  <div class="screen active" id="onboard">
+    <div class="ob-slide active" data-ob="0">
+      <div class="ob-hero" style="background-image:url('https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&q=80')"></div>
+      <div class="ob-fade"></div>
+      <div class="ob-inner">
+        <div class="ob-badge"><div class="n">#1</div><div class="t">AI SONG STUDIO</div><div class="st">★★★★★</div></div>
+        <h1>Welcome to <em>Song Minted</em></h1>
+        <p>Turn any idea, lyric, or photo into a studio-quality song — then mint it as your own.</p>
+        <div class="dots"><i class="on"></i><i></i><i></i><i></i></div>
+        <button class="btn" onclick="obNext()">Get Started &nbsp;→</button>
+      </div>
+    </div>
+    <div class="ob-slide" data-ob="1">
+      <div class="ob-hero" style="background-image:url('https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80')"></div>
+      <div class="ob-fade"></div>
+      <div class="ob-inner">
+        <h1>Mint Your <em>Sound</em></h1>
+        <p>Describe a vibe or paste your lyrics, pick a style, and hear it come alive in seconds.</p>
+        <div class="dots"><i></i><i class="on"></i><i></i><i></i></div>
+        <button class="btn" onclick="obNext()">Continue &nbsp;→</button>
+      </div>
+    </div>
+    <div class="ob-slide" data-ob="2">
+      <div class="ob-hero" style="background-image:url('https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=800&q=80')"></div>
+      <div class="ob-fade"></div>
+      <div class="ob-inner">
+        <h1>Sing in <em>Any Voice</em></h1>
+        <p>Record your voice once, then covers of any track — unlimited, whenever you want.</p>
+        <div class="dots"><i></i><i></i><i class="on"></i><i></i></div>
+        <button class="btn" onclick="obNext()">Continue &nbsp;→</button>
+      </div>
+    </div>
+    <div class="ob-slide" data-ob="3">
+      <div class="ob-hero" style="background-image:url('https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&q=80')"></div>
+      <div class="ob-fade"></div>
+      <div class="ob-inner">
+        <h1>Share to the <em>Charts</em></h1>
+        <p>Publish to Explore, gather plays and likes, and climb the community leaderboard.</p>
+        <div class="dots"><i></i><i></i><i></i><i class="on"></i></div>
+        <button class="btn" onclick="go('paywall')">Continue &nbsp;→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAYWALL -->
+  <div class="screen" id="paywall">
+    <div class="pw-hero" style="background-image:url('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&q=80')">
+      <div class="ov"></div>
+      <div class="pw-x" onclick="go('app');setTab('studio')">✕</div>
+    </div>
+    <div class="pw-crown"><div class="gem"><span>💎</span></div></div>
+    <div class="pw-body">
+      <h2>Go <em>Minted Pro</em></h2>
+      <div class="sub">Unlimited songs, premium voices, and commercial rights.</div>
+      <div class="feats">
+        <div><span class="ck">✓</span> Unlimited song minting</div>
+        <div><span class="ck">✓</span> 30+ premium AI voices</div>
+        <div><span class="ck">✓</span> HD downloads & commercial license</div>
+      </div>
+      <div class="plans">
+        <div class="plan" onclick="selPlan(this)"><div class="tag pop">Popular</div><div class="dur">Weekly</div><div class="pr">€5.99</div></div>
+        <div class="plan sel" onclick="selPlan(this)"><div class="tag off">84% OFF</div><div class="dur">Yearly</div><div class="pr mut">€49.99</div><div class="wk">€0.96<small>per week</small></div></div>
+        <div class="plan" onclick="selPlan(this)"><div class="dur">Lifetime</div><div class="pr">€79.99</div><div class="once">billed once</div></div>
+      </div>
+      <div class="pw-note">Auto-renewable · Cancel anytime ✓</div>
+      <button class="btn gold" onclick="go('app');setTab('studio');toast('Welcome to Minted Pro 💎')">Continue &nbsp;→</button>
+      <div class="pw-links"><span>Terms</span><span>Restore</span><span>Privacy</span></div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div class="screen" id="app">
+    <div class="appbar">
+      <div class="logo"><div class="gem"><span>◆</span></div>
+        <div class="wm">Song<b>Minted</b><sup>AI</sup><small>MINT YOUR SOUND</small></div></div>
+      <div class="topgap">
+        <span class="pill"><span class="coin">◉</span> <span id="coinCount">3</span></span>
+        <span class="pill pro" onclick="go('paywall')">PRO</span>
+      </div>
+    </div>
+
+    <!-- STUDIO TAB -->
+    <div class="tabpage pad hidefab" id="page-studio">
+      <div class="seg" id="modeSeg">
+        <button class="on" data-mode="Simple" onclick="setMode(this)">Simple</button>
+        <button data-mode="Custom" onclick="setMode(this)">Custom</button>
+        <button data-mode="Photo" onclick="setMode(this)">Photo</button>
+      </div>
+      <div id="textMode">
+        <div class="inputbox">
+          <textarea id="songPrompt" placeholder="Describe your song&#10;A dreamy synth-pop track about a summer that never ends…"></textarea>
+          <button class="dice" onclick="randomIdea()">🎲</button>
+        </div>
+        <input id="titleInput" placeholder="Song title (optional)" style="background:var(--panel);border:1px solid var(--stroke);border-radius:16px;padding:16px;margin-top:12px;color:#fff;font-size:16px;width:100%;outline:none">
+      </div>
+      <div id="photoMode" style="display:none">
+        <div class="upload-box" onclick="toast('Photo picker (demo)')"><div class="ic">＋</div>Upload a photo to score</div>
+      </div>
+
+      <div class="advrow"><span class="lbl">ADVANCED</span>
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:15px;color:#c3ccd4;font-weight:600">Instrumental</span>
+        <div class="toggle" id="instToggle" onclick="this.classList.toggle('on')"><div class="knob"></div></div></div>
+      </div>
+      <div class="optgrid">
+        <div class="opt" id="opt-voice" onclick="openSheet('voiceSheet')"><div class="ic">🎤</div><div class="nm">VOICE</div><div class="val" id="val-voice"></div></div>
+        <div class="opt" id="opt-genre" onclick="openSheet('genreSheet')"><div class="ic">🎵</div><div class="nm">GENRE</div><div class="val" id="val-genre"></div></div>
+        <div class="opt" id="opt-mood" onclick="openSheet('moodSheet')"><div class="ic">🎭</div><div class="nm">MOOD</div><div class="val" id="val-mood"></div></div>
+        <div class="opt" id="opt-bpm" onclick="cycleBpm()"><div class="ic">⏱️</div><div class="nm">TEMPO</div><div class="val" id="val-bpm"></div></div>
+      </div>
+      <div style="height:22px"></div>
+      <button class="btn" onclick="createMusic()">◆ &nbsp;MINT SONG &nbsp;<span style="opacity:.7;font-size:14px">(1 ◉)</span></button>
+    </div>
+
+    <!-- COVER TAB -->
+    <div class="tabpage pad hidefab" id="page-cover" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 10px">
+        <h2 style="font-size:24px;font-weight:800">Cover Studio</h2>
+        <span style="width:34px;height:34px;border:1px solid #2a3a34;border-radius:50%;display:flex;align-items:center;justify-content:center">?</span>
+      </div>
+      <div class="inputbox" style="min-height:auto;display:flex;gap:10px;align-items:center;border-color:#3a2f1d">
+        <input id="ytLink" placeholder="Search or paste a song link…" style="flex:1">
+        <span class="chip" onclick="toast('Finding matches… 🎶')">Inspire 🎶</span>
+      </div>
+      <div class="seg"><button class="on">My Voices</button><button>AI Voices</button></div>
+      <div class="voicecard" onclick="toast('Record your voice (demo)')"><span>Add My Voice</span><span style="font-size:26px">⊕</span></div>
+      <div class="voicerow"><div class="ph" style="background-image:url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80')"></div><b style="font-size:20px">Jack</b></div>
+      <div class="voicerow"><div class="ph" style="background-image:url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80')"></div><b style="font-size:20px">Jane</b></div>
+      <div style="height:16px"></div>
+      <button class="btn gold" onclick="createMusic()">◆ &nbsp;MINT COVER</button>
+    </div>
+
+    <!-- TOOLS TAB -->
+    <div class="tabpage pad hidefab" id="page-tools" style="display:none">
+      <div class="h-title">🎛️ Templates</div>
+      <div class="tpl-grid">
+        <div class="tpl" style="background:radial-gradient(circle at 30% 30%,#1d4a44,#08201c)" onclick="quickTpl('Instrumental')"><div class="ic">🎹</div>Instrumental</div>
+        <div class="tpl" style="background:radial-gradient(circle at 60% 40%,#3a3116,#1c1608)" onclick="quickTpl('Duet')"><div class="ic">👥</div>Duet Styles</div>
+      </div>
+      <div class="h-title">🏛️ Studio Packs</div>
+      <div class="tpl-grid">
+        <div class="tpl" style="background-image:url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&q=80')" onclick="quickTpl('Birthday Anthem')"><div style="position:absolute;inset:0;background:rgba(0,0,0,.4)"></div><span style="position:relative">🎉<br>Birthday Anthem</span></div>
+        <div class="tpl" style="background-image:url('https://images.unsplash.com/photo-1543589077-47d81606c1bf?w=500&q=80')" onclick="quickTpl('Wedding Ballad')"><div style="position:absolute;inset:0;background:rgba(0,0,0,.4)"></div><span style="position:relative">💍<br>Wedding Ballad</span></div>
+      </div>
+      <div class="h-title">✦ AI Remix</div>
+      <div class="tpl-grid">
+        <div class="tpl" style="height:120px;background:radial-gradient(circle at 30% 40%,#3a2436,#1a1018)" onclick="toast('Genre Swap (demo)')"><div class="ic">🔄</div>Genre Swap</div>
+        <div class="tpl" style="height:120px;background:radial-gradient(circle at 60% 40%,#124238,#08201c)" onclick="toast('Tempo Shift (demo)')"><div class="ic">⏲️</div>Tempo Shift</div>
+      </div>
+    </div>
+
+    <!-- EXPLORE TAB -->
+    <div class="tabpage pad hidefab" id="page-explore" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 10px">
+        <h2 style="font-size:26px;font-weight:800">Explore</h2>
+        <span class="pill" style="background:var(--panel2)">🔥 Trending</span>
+      </div>
+      <div class="tabscroll">
+        <span class="chip active">For You</span><span class="chip">Top Charts</span><span class="chip">Pop</span><span class="chip">Hip-Hop</span><span class="chip">Lo-Fi</span>
+      </div>
+      <div id="feedList" style="margin-top:10px"></div>
+    </div>
+
+    <!-- VAULT TAB -->
+    <div class="tabpage pad hidefab" id="page-vault" style="display:none">
+      <div class="seg"><button class="on">My Songs</button><button>My Videos</button></div>
+      <div class="tabscroll">
+        <span class="chip active">All</span><span class="chip">Liked</span><span class="chip">Minted</span><span class="chip">Covers</span><span class="chip">Playlists</span>
+      </div>
+      <div class="profcard"><b style="font-size:19px">Complete your creator profile</b><div class="arrow">→</div></div>
+      <div class="create-row" onclick="setTab('studio')"><div class="sq">＋</div><b style="font-size:22px">Mint a Song ◆</b></div>
+      <div id="songList"></div>
+    </div>
+
+    <!-- bottom nav -->
+    <div class="tabbar">
+      <div class="tab active" data-tab="studio" onclick="setTab('studio')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Studio</div>
+      <div class="tab" data-tab="cover" onclick="setTab('cover')">
+        <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg>Cover</div>
+      <div class="tab" data-tab="tools" onclick="setTab('tools')">
+        <svg viewBox="0 0 24 24"><path d="M14 6a3.5 3.5 0 0 1 4 4l-8 8-4 1 1-4z"/></svg>Tools</div>
+      <div class="tab" data-tab="explore" onclick="setTab('explore')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-4 0 2-6z" fill="none"/><path d="M15 9l-1.5 4.5L9 15l1.5-4.5z"/></svg>Explore</div>
+      <div class="tab" data-tab="vault" onclick="setTab('vault')">
+        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="12" cy="12" r="3.2"/><path d="M12 8.8v-1M12 16.2v-1"/></svg>Vault</div>
+    </div>
+    <div class="fab" id="vaultFab" style="display:none" onclick="setTab('studio')">◆ Mint</div>
+  </div>
+
+  <!-- GENERATING -->
+  <div class="screen" id="gen">
+    <div class="mint-coin">◆</div>
+    <div class="eq" id="eqbars"></div>
+    <div class="genpct" id="genPct">0%</div>
+    <div class="genlbl" id="genLbl">Minting your track…</div>
+  </div>
+
+  <!-- PLAYER -->
+  <div class="screen" id="player">
+    <div class="pl-top"><span onclick="go('app');setTab('vault')" style="cursor:pointer">‹</span><span>⋯</span></div>
+    <div class="pl-art" id="plArt"><div class="badge">◆ Minted</div></div>
+    <div class="pl-title" id="plTitle">Your Song</div>
+    <div class="pl-meta" id="plMeta">Pop 🎵 · Happy 😊</div>
+    <div class="pl-bar" id="plBar" onclick="seek(event)"><div class="fill" id="plFill"></div><div class="head" id="plHead"></div></div>
+    <div class="pl-times"><span id="plCur">0:00</span><span id="plDur">0:20</span></div>
+    <div class="pl-ctrls"><span class="sk">⏮</span><div class="pp" id="ppBtn" onclick="togglePlay()">▶</div><span class="sk">⏭</span></div>
+    <div class="pl-actions">
+      <div class="a" onclick="toast('Downloaded ⬇')">⬇ Download</div>
+      <div class="a" onclick="toast('Published to Explore 🚀')">🚀 Publish</div>
+    </div>
+  </div>
+
+  <!-- SHEETS -->
+  <div class="sheet-wrap" id="moodSheet">
+    <div class="sheet-bg" onclick="closeSheet('moodSheet')"></div>
+    <div class="sheet"><div class="grab"></div><h3>Pick Your Mood</h3>
+      <div class="emojigrid" id="moodGrid"></div><div style="height:70px"></div>
+      <div class="sheet-apply"><button class="btn" onclick="applyPick('mood')">Apply &nbsp;→</button></div></div>
+  </div>
+  <div class="sheet-wrap" id="genreSheet">
+    <div class="sheet-bg" onclick="closeSheet('genreSheet')"></div>
+    <div class="sheet"><div class="grab"></div><h3>Pick Your Genre</h3>
+      <div class="searchbar">🔍 Search</div>
+      <div class="emojigrid" id="genreGrid"></div><div style="height:70px"></div>
+      <div class="sheet-apply"><button class="btn" onclick="applyPick('genre')">Apply &nbsp;→</button></div></div>
+  </div>
+  <div class="sheet-wrap" id="voiceSheet">
+    <div class="sheet-bg" onclick="closeSheet('voiceSheet')"></div>
+    <div class="sheet"><div class="grab"></div><h3>Vocal Options</h3>
+      <div class="sect-lbl" style="margin-top:0">Vocal Gender</div>
+      <div class="vgender" id="genderGrid"></div>
+      <div class="sect-lbl">My Voices 🎙️</div>
+      <div style="text-align:center"><div class="addvoice">＋</div><div style="font-size:14px;font-weight:700">Add Your Voice</div></div>
+      <div class="sect-lbl">Premium Voices 💎</div>
+      <div class="aivgrid" id="aivGrid"></div><div style="height:70px"></div>
+      <div class="sheet-apply"><button class="btn" onclick="applyPick('voice')">Apply &nbsp;→</button></div></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);el.classList.add('active');el.scrollTop=0;}
+let ob=0;
+function obNext(){document.querySelector('.ob-slide.active').classList.remove('active');
+  ob++;document.querySelector('[data-ob="'+ob+'"]').classList.add('active');}
+
+function setTab(t){
+  document.querySelectorAll('.tabpage').forEach(p=>p.style.display='none');
+  document.getElementById('page-'+t).style.display='block';
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));
+  document.getElementById('vaultFab').style.display=t==='vault'?'flex':'none';
+  document.getElementById('app').scrollTop=0;
+  if(t==='vault')renderLib();if(t==='explore')renderFeed();
+}
+
+function setMode(el){
+  document.querySelectorAll('#modeSeg button').forEach(b=>b.className='');
+  el.className='on';
+  const mode=el.dataset.mode, photo=mode==='Photo';
+  document.getElementById('photoMode').style.display=photo?'block':'none';
+  document.getElementById('textMode').style.display=photo?'none':'block';
+  const ta=document.getElementById('songPrompt');
+  if(mode==='Custom')ta.placeholder="Write your own lyrics here…\nWe'll compose the music around your words.";
+  else ta.placeholder="Describe your song\nA dreamy synth-pop track about a summer that never ends…";
+}
+
+const sel={mood:null,genre:null,voice:null,bpm:null};
+const moods=[['⚡','Energetic'],['😊','Happy'],['💖','Romantic'],['🔥','Aggressive'],['😢','Sad'],['🌟','Uplifting'],['❄️','Chill'],['🧘','Relaxing'],['😔','Melancholic'],['😂','Fun'],['🛸','Futuristic'],['🌙','Dreamy']];
+const genres=[['🎵','Pop'],['🎧','Hip-Hop'],['🎸','Rock'],['🎹','Lo-Fi'],['🎛️','EDM'],['🎤','R&B'],['🤠','Country'],['🦋','Indie'],['🎺','Jazz'],['🥁','Afrobeat'],['🎻','Folk'],['⛪','Gospel']];
+const genders=[['🎲','Random'],['👱‍♂️','Male'],['👩‍🦰','Female']];
+const aiVoices=[
+  ['Nova','https://images.unsplash.com/photo-1508341591423-4347099e1f19?w=200&q=80'],
+  ['Blaze','https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&q=80'],
+  ['Echo','https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&q=80'],
+  ['Ryder','https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80'],
+  ['Luna','https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&q=80'],
+  ['Onyx','https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&q=80']];
+let tmpPick={mood:null,genre:null,voice:null},tmpGender=null;
+
+function buildSheets(){
+  document.getElementById('moodGrid').innerHTML=moods.map((s,i)=>
+    `<div class="emojicell" onclick="pickCell('mood',${i},this)"><div class="circ">${s[0]}</div><div class="lab">${s[1]}</div></div>`).join('');
+  document.getElementById('genreGrid').innerHTML=genres.map((s,i)=>
+    `<div class="emojicell" onclick="pickCell('genre',${i},this)"><div class="circ">${s[0]}</div><div class="lab">${s[1]}</div></div>`).join('');
+  document.getElementById('genderGrid').innerHTML=genders.map((g,i)=>
+    `<div class="vcell" onclick="pickGender(${i},this)"><div class="circ">${g[0]}${i>0?'<span class=lock>🔒</span>':''}</div><div class="lab" style="font-size:14px;font-weight:700">${g[1]}</div></div>`).join('');
+  document.getElementById('aivGrid').innerHTML=aiVoices.map((v,i)=>
+    `<div class="aiv" onclick="pickAiv(${i},this)"><div class="av" style="background-image:url('${v[1]}')"><span class="star">💎</span></div><div class="nm">${v[0]}</div></div>`).join('');
+}
+function pickCell(type,i,el){el.parentElement.querySelectorAll('.emojicell').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');tmpPick[type]=(type==='mood'?moods:genres)[i];}
+function pickGender(i,el){document.querySelectorAll('#genderGrid .vcell').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');tmpGender=genders[i];}
+function pickAiv(i,el){document.querySelectorAll('#aivGrid .aiv').forEach(c=>c.style.opacity=.4);
+  el.style.opacity=1;tmpPick.voice=[aiVoices[i][0]];}
+function openSheet(id){document.getElementById(id).classList.add('open');}
+function closeSheet(id){document.getElementById(id).classList.remove('open');}
+function applyPick(type){
+  if(type==='voice'){const v=tmpPick.voice?tmpPick.voice[0]:(tmpGender?tmpGender[1]:null);
+    if(v){sel.voice=v;setOpt('voice',v);}closeSheet('voiceSheet');return;}
+  if(tmpPick[type]){sel[type]=tmpPick[type][1];setOpt(type,tmpPick[type][1]);}
+  closeSheet(type+'Sheet');
+}
+function setOpt(k,v){document.getElementById('val-'+k).textContent=v;document.getElementById('opt-'+k).classList.add('set');}
+function cycleBpm(){const opts=['Slow','Medium','Fast','Very Fast'];let i=opts.indexOf(sel.bpm);
+  sel.bpm=opts[(i+1)%opts.length];setOpt('bpm',sel.bpm);}
+
+const ideas=["A summer road-trip anthem with friends","Late-night city lights and neon dreams",
+  "A heartfelt song for mom's birthday","Chasing sunsets on a golden beach",
+  "A breakup ballad about coming back stronger","An epic gym motivation track"];
+function randomIdea(){document.getElementById('songPrompt').value=ideas[Math.floor(Math.random()*ideas.length)];toast('🎲 Idea minted');}
+
+const songImgs=['https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&q=80',
+  'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=500&q=80',
+  'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&q=80',
+  'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&q=80'];
+const titleWords=[['Golden','Midnight','Neon','Velvet','Electric','Minted'],['Hour','Dreams','Heartbeat','Horizon','Echoes','Sunrise']];
+let library=[
+  {title:'You Smiled First',meta:'Pop 🎵 · Happy 😊',badge:'Sample Song',img:'grad'},
+  {title:'Chloe in the Morning Light',meta:'Indie 🦋 · Romantic 💖',badge:'Sample Song',img:'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&q=80'},
+  {title:"Little Leo's Laughter",meta:'Folk 🎻 · Uplifting 🌟',badge:'Sample Cover',img:'https://images.unsplash.com/photo-1490725263030-1f0521cec8ee?w=200&q=80'}
+];
+let feed=[
+  {title:'Neon Overdrive',genre:'EDM',author:'@synthlord',plays:'128K',likes:'9.2K',img:'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&q=80'},
+  {title:'Sunday in Lisbon',genre:'Lo-Fi',author:'@mellowbeats',plays:'87K',likes:'6.4K',img:'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&q=80'},
+  {title:'Concrete Kings',genre:'Hip-Hop',author:'@b4rs',plays:'204K',likes:'15K',img:'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80'},
+  {title:'Paper Hearts',genre:'Pop',author:'@ava.m',plays:'62K',likes:'4.1K',img:'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80'}
+];
+let curSong=null,coins=3;
+function createMusic(){
+  const genre=sel.genre||'Pop', mood=sel.mood||'Happy';
+  const moodE=(moods.find(s=>s[1]===mood)||['😊'])[0], genreE=(genres.find(g=>g[1]===genre)||['🎵'])[0];
+  const typed=document.getElementById('titleInput')?document.getElementById('titleInput').value.trim():'';
+  const title=typed||(titleWords[0][Math.floor(Math.random()*6)]+' '+titleWords[1][Math.floor(Math.random()*6)]);
+  curSong={title,meta:`${genre} ${genreE} · ${mood} ${moodE}`,img:songImgs[Math.floor(Math.random()*4)],badge:'◆ Minted'};
+  go('gen');runGen();
+}
+function runGen(){
+  document.getElementById('eqbars').innerHTML=Array.from({length:11}).map((_,i)=>`<i style="animation-delay:${i*0.09}s"></i>`).join('');
+  const lbls=['Writing lyrics…','Composing melody…','Adding vocals…','Minting master…'];
+  let p=0;const pctEl=document.getElementById('genPct'),lblEl=document.getElementById('genLbl');
+  const t=setInterval(()=>{
+    p+=Math.random()*7+2;
+    if(p>=100){p=100;clearInterval(t);library.unshift(curSong);
+      if(coins>0){coins--;document.getElementById('coinCount').textContent=coins;}
+      setTimeout(openPlayer,450);}
+    pctEl.textContent=Math.floor(p)+'%';lblEl.textContent=lbls[Math.min(3,Math.floor(p/25))];
+  },220);
+}
+
+let actx,playing=false,cur=0,dur=20,raf,lastT,noteTimer;
+const scale=[261.6,293.7,329.6,392,440,523.3,587.3,659.3];
+function openPlayer(){
+  document.getElementById('plArt').style.backgroundImage=curSong.img==='grad'?'linear-gradient(135deg,#0e6b5f,#0a2e2a)':`url('${curSong.img}')`;
+  document.getElementById('plTitle').textContent=curSong.title;
+  document.getElementById('plMeta').textContent=curSong.meta;
+  cur=0;playing=false;document.getElementById('ppBtn').textContent='▶';updateBar();go('player');
+  setTimeout(togglePlay,300);
+}
+function ensureAudio(){if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();}
+function playNote(){if(!playing)return;ensureAudio();
+  const o=actx.createOscillator(),g=actx.createGain();
+  o.type=['sine','triangle','sawtooth'][Math.floor(Math.random()*3)];
+  o.frequency.value=scale[Math.floor(Math.random()*scale.length)];
+  g.gain.setValueAtTime(0,actx.currentTime);
+  g.gain.linearRampToValueAtTime(.16,actx.currentTime+.03);
+  g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.32);
+  o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+.34);}
+function togglePlay(){playing=!playing;
+  document.getElementById('ppBtn').textContent=playing?'❚❚':'▶';
+  if(playing){ensureAudio();actx.resume&&actx.resume();lastT=performance.now();tick();noteTimer=setInterval(playNote,300);}
+  else{cancelAnimationFrame(raf);clearInterval(noteTimer);}}
+function tick(){const now=performance.now();cur+=(now-lastT)/1000;lastT=now;
+  if(cur>=dur){cur=dur;playing=false;clearInterval(noteTimer);document.getElementById('ppBtn').textContent='▶';updateBar();return;}
+  updateBar();raf=requestAnimationFrame(tick);}
+function updateBar(){const pct=cur/dur*100;
+  document.getElementById('plFill').style.width=pct+'%';document.getElementById('plHead').style.left=pct+'%';
+  document.getElementById('plCur').textContent=fmt(cur);document.getElementById('plDur').textContent=fmt(dur);}
+function fmt(s){s=Math.floor(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function seek(e){const b=document.getElementById('plBar').getBoundingClientRect();
+  cur=Math.max(0,Math.min(1,(e.clientX-b.left)/b.width))*dur;updateBar();}
+
+function renderLib(){
+  document.getElementById('songList').innerHTML=library.map((s,i)=>{
+    const th=s.img==='grad'?`<div class="th" style="background:linear-gradient(135deg,#0e6b5f,#0a2e2a)"><span>MINT</span></div>`
+      :`<div class="th" style="background-image:url('${s.img}')"></div>`;
+    return `<div class="songrow" onclick="playFromLib(${i})">${th}<div class="info"><div class="t">${s.title}</div>
+      <div class="m">${s.meta}</div><span class="badge">${s.badge}</span></div><div class="dots">⋯</div></div>`;
+  }).join('');
+}
+function playFromLib(i){curSong=library[i];openPlayer();}
+function renderFeed(){
+  document.getElementById('feedList').innerHTML=feed.map((f,i)=>
+    `<div class="feedcard" style="background-image:url('${f.img}')" onclick="playFeed(${i})">
+      <div class="fov"></div><span class="genretag">${f.genre}</span>
+      <div class="fbody"><div><div class="ft">${f.title}</div>
+        <div class="fm"><span>${f.author}</span><span>▶ ${f.plays}</span><span>♥ ${f.likes}</span></div></div>
+        <div class="fplay">▶</div></div></div>`).join('');
+}
+function playFeed(i){curSong={title:feed[i].title,meta:feed[i].genre+' · '+feed[i].author,img:feed[i].img,badge:'◆ Community'};openPlayer();}
+
+function selPlan(el){document.querySelectorAll('.plan').forEach(p=>p.classList.remove('sel'));el.classList.add('sel');}
+function quickTpl(name){toast('Template: '+name);setTab('studio');}
+let toastT;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1800);}
+
+buildSheets();renderLib();renderFeed();
+</script>
+</body>
+</html>

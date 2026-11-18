@@ -1,0 +1,155 @@
+import SwiftUI
+
+// MARK: - Lightweight in-app localization
+// The user picks a language at onboarding; the whole UI switches to it and the
+// choice is remembered. `tr("key")` returns the string for the current language.
+
+final class Localizer: ObservableObject {
+    static let shared = Localizer()
+    @Published var lang: String = UserDefaults.standard.string(forKey: "app_lang") ?? "en"
+
+    var hasChosen: Bool { UserDefaults.standard.string(forKey: "app_lang") != nil }
+
+    func set(_ code: String) {
+        lang = code
+        UserDefaults.standard.set(code, forKey: "app_lang")
+    }
+
+    func t(_ key: String) -> String {
+        strings[key]?[lang] ?? strings[key]?["en"] ?? key
+    }
+}
+
+func tr(_ key: String) -> String { Localizer.shared.t(key) }
+
+let appLanguages: [(code: String, name: String, flag: String)] = [
+    ("en", "English", "🇬🇧"), ("es", "Español", "🇪🇸"), ("fr", "Français", "🇫🇷"),
+    ("it", "Italiano", "🇮🇹"), ("de", "Deutsch", "🇩🇪"), ("pt", "Português", "🇵🇹")
+]
+
+let strings: [String: [String: String]] = [
+    "choose_language": ["en": "Choose your language", "es": "Elige tu idioma", "fr": "Choisissez votre langue", "it": "Scegli la tua lingua", "de": "Wähle deine Sprache", "pt": "Escolha o seu idioma"],
+    "lang_sub": ["en": "You can change this later in settings.", "es": "Puedes cambiarlo más tarde en ajustes.", "fr": "Vous pourrez le changer plus tard dans les réglages.", "it": "Puoi cambiarlo in seguito nelle impostazioni.", "de": "Du kannst dies später in den Einstellungen ändern.", "pt": "Pode alterar isto mais tarde nas definições."],
+    "continue": ["en": "Continue", "es": "Continuar", "fr": "Continuer", "it": "Continua", "de": "Weiter", "pt": "Continuar"],
+    "get_started": ["en": "Get Started", "es": "Comenzar", "fr": "Commencer", "it": "Inizia", "de": "Loslegen", "pt": "Começar"],
+
+    "ob1_pre": ["en": "Welcome to", "es": "Te damos la bienvenida a", "fr": "Bienvenue sur", "it": "Benvenuto su", "de": "Willkommen bei", "pt": "Bem-vindo ao"],
+    "ob1_hl": ["en": "Song Minted", "es": "Song Minted", "fr": "Song Minted", "it": "Song Minted", "de": "Song Minted", "pt": "Song Minted"],
+    "ob1_sub": ["en": "Turn any idea, lyric, or photo into a studio-quality song — then mint it as your own.", "es": "Convierte cualquier idea, letra o foto en una canción de calidad de estudio, y hazla tuya.", "fr": "Transformez une idée, des paroles ou une photo en une chanson de qualité studio, puis faites-en la vôtre.", "it": "Trasforma un'idea, un testo o una foto in una canzone di qualità da studio e rendila tua.", "de": "Verwandle jede Idee, jeden Text oder jedes Foto in einen Song in Studioqualität — und mach ihn zu deinem.", "pt": "Transforme qualquer ideia, letra ou foto numa canção com qualidade de estúdio e torne-a sua."],
+
+    "ob2_pre": ["en": "Mint Your", "es": "Crea tu", "fr": "Créez votre", "it": "Crea il tuo", "de": "Erschaffe deinen", "pt": "Crie o seu"],
+    "ob2_hl": ["en": "Sound", "es": "Sonido", "fr": "Son", "it": "Suono", "de": "Sound", "pt": "Som"],
+    "ob2_sub": ["en": "Describe a vibe or paste your lyrics, pick a style, and hear it come alive in seconds.", "es": "Describe una vibra o pega tu letra, elige un estilo y escúchala cobrar vida en segundos.", "fr": "Décrivez une ambiance ou collez vos paroles, choisissez un style et écoutez-la prendre vie en quelques secondes.", "it": "Descrivi un'atmosfera o incolla il tuo testo, scegli uno stile e ascoltala prendere vita in pochi secondi.", "de": "Beschreibe eine Stimmung oder füge deinen Text ein, wähle einen Stil und höre in Sekunden, wie er lebendig wird.", "pt": "Descreva uma vibe ou cole a sua letra, escolha um estilo e ouça-a ganhar vida em segundos."],
+
+    "ob3_pre": ["en": "Sing in Any", "es": "Canta con cualquier", "fr": "Chantez avec n'importe quelle", "it": "Canta con qualsiasi", "de": "Singe mit jeder", "pt": "Cante com qualquer"],
+    "ob3_hl": ["en": "Voice", "es": "Voz", "fr": "Voix", "it": "Voce", "de": "Stimme", "pt": "Voz"],
+    "ob3_sub": ["en": "Record your voice once, then covers of any track — unlimited, whenever you want.", "es": "Graba tu voz una vez y haz versiones de cualquier canción, sin límites, cuando quieras.", "fr": "Enregistrez votre voix une fois, puis reprenez n'importe quel morceau — sans limite, quand vous voulez.", "it": "Registra la tua voce una volta e crea cover di qualsiasi brano, senza limiti, quando vuoi.", "de": "Nimm deine Stimme einmal auf und singe dann jeden Track nach — unbegrenzt, wann immer du willst.", "pt": "Grave a sua voz uma vez e faça versões de qualquer faixa — sem limites, quando quiser."],
+
+    "ob4_pre": ["en": "Share to the", "es": "Comparte en las", "fr": "Partagez dans les", "it": "Condividi nelle", "de": "Teile in den", "pt": "Partilhe nas"],
+    "ob4_hl": ["en": "Charts", "es": "Listas", "fr": "Classements", "it": "Classifiche", "de": "Charts", "pt": "Tabelas"],
+    "ob4_sub": ["en": "Publish to Explore, gather plays and likes, and climb the leaderboard.", "es": "Publica en Explorar, consigue reproducciones y me gusta, y sube en la clasificación.", "fr": "Publiez dans Explorer, récoltez des écoutes et des j'aime, et grimpez au classement.", "it": "Pubblica in Esplora, ottieni ascolti e like e scala la classifica.", "de": "Veröffentliche in Entdecken, sammle Plays und Likes und klettere in der Rangliste nach oben.", "pt": "Publique em Explorar, junte reproduções e gostos e suba na classificação."],
+
+    "pro_title": ["en": "Go Minted Pro", "es": "Hazte Minted Pro", "fr": "Passez à Minted Pro", "it": "Passa a Minted Pro", "de": "Hol dir Minted Pro", "pt": "Torne-se Minted Pro"],
+    "pro_sub": ["en": "Unlimited songs, premium voices, and commercial rights.", "es": "Canciones ilimitadas, voces premium y derechos comerciales.", "fr": "Chansons illimitées, voix premium et droits commerciaux.", "it": "Canzoni illimitate, voci premium e diritti commerciali.", "de": "Unbegrenzte Songs, Premium-Stimmen und kommerzielle Rechte.", "pt": "Canções ilimitadas, vozes premium e direitos comerciais."],
+
+    "tab_studio": ["en": "Studio", "es": "Estudio", "fr": "Studio", "it": "Studio", "de": "Studio", "pt": "Estúdio"],
+    "tab_cover": ["en": "Cover", "es": "Versión", "fr": "Reprise", "it": "Cover", "de": "Cover", "pt": "Versão"],
+    "tab_tools": ["en": "Tools", "es": "Herramientas", "fr": "Outils", "it": "Strumenti", "de": "Werkzeuge", "pt": "Ferramentas"],
+    "tab_explore": ["en": "Explore", "es": "Explorar", "fr": "Explorer", "it": "Esplora", "de": "Entdecken", "pt": "Explorar"],
+    "tab_vault": ["en": "Library", "es": "Biblioteca", "fr": "Bibliothèque", "it": "Libreria", "de": "Bibliothek", "pt": "Biblioteca"],
+
+    "mint_song": ["en": "MINT SONG", "es": "CREAR CANCIÓN", "fr": "CRÉER LA CHANSON", "it": "CREA CANZONE", "de": "SONG ERSTELLEN", "pt": "CRIAR CANÇÃO"],
+    "vault_title": ["en": "Library", "es": "Biblioteca", "fr": "Bibliothèque", "it": "Libreria", "de": "Bibliothek", "pt": "Biblioteca"],
+    "mint_a_song": ["en": "Mint a Song ◆", "es": "Crear una canción ◆", "fr": "Créer une chanson ◆", "it": "Crea una canzone ◆", "de": "Song erstellen ◆", "pt": "Criar uma canção ◆"],
+    "download": ["en": "Download", "es": "Descargar", "fr": "Télécharger", "it": "Scarica", "de": "Herunterladen", "pt": "Transferir"],
+    "publish": ["en": "Publish", "es": "Publicar", "fr": "Publier", "it": "Pubblica", "de": "Veröffentlichen", "pt": "Publicar"],
+    "audio_input": ["en": "Hum, sing, or play a melody", "es": "Tararea, canta o toca una melodía", "fr": "Fredonnez, chantez ou jouez une mélodie", "it": "Canticchia, canta o suona una melodia", "de": "Summe, singe oder spiele eine Melodie", "pt": "Cante, trauteie ou toque uma melodia"],
+    "recording": ["en": "Recording… tap to stop", "es": "Grabando… toca para parar", "fr": "Enregistrement… touchez pour arrêter", "it": "Registrazione… tocca per fermare", "de": "Aufnahme… zum Stoppen tippen", "pt": "A gravar… toque para parar"],
+    "clip_ready": ["en": "Melody captured ✓", "es": "Melodía capturada ✓", "fr": "Mélodie capturée ✓", "it": "Melodia catturata ✓", "de": "Melodie aufgenommen ✓", "pt": "Melodia capturada ✓"],
+
+    // Menus & actions
+    "share": ["en": "Share", "es": "Compartir", "fr": "Partager", "it": "Condividi", "de": "Teilen", "pt": "Partilhar"],
+    "delete": ["en": "Delete", "es": "Eliminar", "fr": "Supprimer", "it": "Elimina", "de": "Löschen", "pt": "Eliminar"],
+    "publish_explore": ["en": "Publish to Explore", "es": "Publicar en Explorar", "fr": "Publier dans Explorer", "it": "Pubblica in Esplora", "de": "In Entdecken veröffentlichen", "pt": "Publicar em Explorar"],
+    "extend": ["en": "Extend", "es": "Extender", "fr": "Prolonger", "it": "Estendi", "de": "Verlängern", "pt": "Estender"],
+    "music_video": ["en": "Music video", "es": "Videoclip", "fr": "Clip vidéo", "it": "Video musicale", "de": "Musikvideo", "pt": "Videoclipe"],
+    "download_stems": ["en": "Download stems", "es": "Descargar pistas", "fr": "Télécharger les pistes", "it": "Scarica le tracce", "de": "Stems herunterladen", "pt": "Transferir faixas"],
+    "downloading": ["en": "Downloading…", "es": "Descargando…", "fr": "Téléchargement…", "it": "Scaricamento…", "de": "Wird geladen…", "pt": "A transferir…"],
+    "nothing_download": ["en": "Nothing to download yet", "es": "Nada que descargar aún", "fr": "Rien à télécharger", "it": "Niente da scaricare", "de": "Noch nichts zum Herunterladen", "pt": "Nada para transferir ainda"],
+
+    // Studio
+    "mode_simple": ["en": "Simple", "es": "Simple", "fr": "Simple", "it": "Semplice", "de": "Einfach", "pt": "Simples"],
+    "mode_custom": ["en": "Custom", "es": "Personalizado", "fr": "Personnalisé", "it": "Personalizzato", "de": "Eigen", "pt": "Personalizado"],
+    "mode_photo": ["en": "Photo", "es": "Foto", "fr": "Photo", "it": "Foto", "de": "Foto", "pt": "Foto"],
+    "instrumental": ["en": "Instrumental", "es": "Instrumental", "fr": "Instrumental", "it": "Strumentale", "de": "Instrumental", "pt": "Instrumental"],
+    "upload_audio": ["en": "Upload audio", "es": "Subir audio", "fr": "Importer un audio", "it": "Carica audio", "de": "Audio hochladen", "pt": "Carregar áudio"],
+    "clear": ["en": "Clear", "es": "Borrar", "fr": "Effacer", "it": "Cancella", "de": "Löschen", "pt": "Limpar"],
+    "your_audio": ["en": "Your audio", "es": "Tu audio", "fr": "Votre audio", "it": "Il tuo audio", "de": "Dein Audio", "pt": "O seu áudio"],
+    "cover_ready_mint": ["en": "Cover ready · Mint keeps your melody", "es": "Versión lista · Mint conserva tu melodía", "fr": "Reprise prête · Mint garde votre mélodie", "it": "Cover pronta · Mint mantiene la tua melodia", "de": "Cover bereit · Mint behält deine Melodie", "pt": "Versão pronta · Mint mantém a sua melodia"],
+    "choose_photo": ["en": "Choose a photo", "es": "Elige una foto", "fr": "Choisir une photo", "it": "Scegli una foto", "de": "Foto auswählen", "pt": "Escolher uma foto"],
+    "change_photo": ["en": "Change photo", "es": "Cambiar foto", "fr": "Changer de photo", "it": "Cambia foto", "de": "Foto ändern", "pt": "Alterar foto"],
+    "personalize": ["en": "PERSONALIZE", "es": "PERSONALIZAR", "fr": "PERSONNALISER", "it": "PERSONALIZZA", "de": "ANPASSEN", "pt": "PERSONALIZAR"],
+    "faithful_audio": ["en": "Faithful to audio", "es": "Fiel al audio", "fr": "Fidèle à l'audio", "it": "Fedele all'audio", "de": "Treu zum Audio", "pt": "Fiel ao áudio"],
+    "faithful_style": ["en": "Faithful to style", "es": "Fiel al estilo", "fr": "Fidèle au style", "it": "Fedele allo stile", "de": "Treu zum Stil", "pt": "Fiel ao estilo"],
+    "weirdness": ["en": "Weirdness", "es": "Rareza", "fr": "Étrangeté", "it": "Stranezza", "de": "Verrücktheit", "pt": "Estranheza"],
+    "loose": ["en": "Loose", "es": "Libre", "fr": "Libre", "it": "Libero", "de": "Locker", "pt": "Livre"],
+    "faithful": ["en": "Faithful", "es": "Fiel", "fr": "Fidèle", "it": "Fedele", "de": "Treu", "pt": "Fiel"],
+    "free": ["en": "Free", "es": "Libre", "fr": "Libre", "it": "Libero", "de": "Frei", "pt": "Livre"],
+    "on_genre": ["en": "On-genre", "es": "En género", "fr": "Fidèle au genre", "it": "Nel genere", "de": "Genretreu", "pt": "No género"],
+    "safe": ["en": "Safe", "es": "Seguro", "fr": "Sûr", "it": "Sicuro", "de": "Sicher", "pt": "Seguro"],
+    "experimental": ["en": "Experimental", "es": "Experimental", "fr": "Expérimental", "it": "Sperimentale", "de": "Experimentell", "pt": "Experimental"],
+    "lyrics_caps": ["en": "LYRICS", "es": "LETRA", "fr": "PAROLES", "it": "TESTO", "de": "LIEDTEXT", "pt": "LETRA"],
+    "write_for_me": ["en": "Write for me", "es": "Escríbela por mí", "fr": "Écrire pour moi", "it": "Scrivi tu", "de": "Für mich schreiben", "pt": "Escrever por mim"],
+    "writing": ["en": "Writing…", "es": "Escribiendo…", "fr": "Écriture…", "it": "Sto scrivendo…", "de": "Schreibe…", "pt": "A escrever…"],
+    "lbl_voice": ["en": "VOICE", "es": "VOZ", "fr": "VOIX", "it": "VOCE", "de": "STIMME", "pt": "VOZ"],
+    "lbl_genre": ["en": "GENRE", "es": "GÉNERO", "fr": "GENRE", "it": "GENERE", "de": "GENRE", "pt": "GÉNERO"],
+    "lbl_mood": ["en": "MOOD", "es": "ÁNIMO", "fr": "AMBIANCE", "it": "UMORE", "de": "STIMMUNG", "pt": "HUMOR"],
+    "lbl_tempo": ["en": "TEMPO", "es": "TEMPO", "fr": "TEMPO", "it": "TEMPO", "de": "TEMPO", "pt": "TEMPO"],
+    "pick_genre": ["en": "Pick a genre", "es": "Elige un género", "fr": "Choisir un genre", "it": "Scegli un genere", "de": "Genre wählen", "pt": "Escolher um género"],
+    "pick_mood": ["en": "Pick a mood", "es": "Elige un ánimo", "fr": "Choisir une ambiance", "it": "Scegli un umore", "de": "Stimmung wählen", "pt": "Escolher um humor"],
+    "pick_voice": ["en": "Pick a voice", "es": "Elige una voz", "fr": "Choisir une voix", "it": "Scegli una voce", "de": "Stimme wählen", "pt": "Escolher uma voz"],
+
+    // Explore / Vault / Settings
+    "explore_title": ["en": "Explore", "es": "Explorar", "fr": "Explorer", "it": "Esplora", "de": "Entdecken", "pt": "Explorar"],
+    "all": ["en": "All", "es": "Todas", "fr": "Tout", "it": "Tutte", "de": "Alle", "pt": "Todas"],
+    "liked": ["en": "Liked", "es": "Favoritas", "fr": "Aimées", "it": "Preferite", "de": "Gefällt mir", "pt": "Curtidas"],
+    "from_your_audio": ["en": "From your audio", "es": "De tu audio", "fr": "À partir de votre audio", "it": "Dal tuo audio", "de": "Aus deinem Audio", "pt": "A partir do seu áudio"],
+    "settings": ["en": "Settings", "es": "Ajustes", "fr": "Réglages", "it": "Impostazioni", "de": "Einstellungen", "pt": "Definições"],
+    "credits": ["en": "Credits", "es": "Créditos", "fr": "Crédits", "it": "Crediti", "de": "Guthaben", "pt": "Créditos"],
+    "go_pro": ["en": "Go Pro", "es": "Hazte Pro", "fr": "Passer Pro", "it": "Diventa Pro", "de": "Pro werden", "pt": "Torne-se Pro"],
+    "language": ["en": "Language", "es": "Idioma", "fr": "Langue", "it": "Lingua", "de": "Sprache", "pt": "Idioma"],
+    "restore_purchases": ["en": "Restore purchases", "es": "Restaurar compras", "fr": "Restaurer les achats", "it": "Ripristina acquisti", "de": "Käufe wiederherstellen", "pt": "Restaurar compras"],
+    "about_songminted": ["en": "About Song Minted", "es": "Acerca de Song Minted", "fr": "À propos de Song Minted", "it": "Info su Song Minted", "de": "Über Song Minted", "pt": "Sobre o Song Minted"],
+
+    // Extend sheet
+    "extend_song": ["en": "Extend song", "es": "Extender canción", "fr": "Prolonger la chanson", "it": "Estendi canzone", "de": "Song verlängern", "pt": "Estender canção"],
+    "extend_sub": ["en": "Continue this track into a longer version — your way.", "es": "Continúa esta pista en una versión más larga, a tu manera.", "fr": "Prolongez ce morceau en une version plus longue, à votre façon.", "it": "Continua questo brano in una versione più lunga, a modo tuo.", "de": "Führe diesen Track zu einer längeren Version fort — nach deinem Geschmack.", "pt": "Continue esta faixa numa versão mais longa, à sua maneira."],
+    "continue_from_end": ["en": "Continue from the end", "es": "Continuar desde el final", "fr": "Continuer depuis la fin", "it": "Continua dalla fine", "de": "Vom Ende fortsetzen", "pt": "Continuar a partir do fim"],
+    "continue_from": ["en": "Continue from", "es": "Continuar desde", "fr": "Continuer à partir de", "it": "Continua da", "de": "Fortsetzen ab", "pt": "Continuar a partir de"],
+    "where_next": ["en": "WHERE IT GOES NEXT (optional)", "es": "HACIA DÓNDE VA (opcional)", "fr": "LA SUITE (facultatif)", "it": "DOVE VA (facoltativo)", "de": "WIE ES WEITERGEHT (optional)", "pt": "PARA ONDE VAI (opcional)"],
+
+    // Video
+    "close": ["en": "Close", "es": "Cerrar", "fr": "Fermer", "it": "Chiudi", "de": "Schließen", "pt": "Fechar"],
+    "your_song": ["en": "Your Song", "es": "Tu canción", "fr": "Votre chanson", "it": "La tua canzone", "de": "Dein Song", "pt": "A sua canção"],
+    "cinematic_video": ["en": "Cinematic video", "es": "Video cinematográfico", "fr": "Vidéo cinématique", "it": "Video cinematografico", "de": "Kinovideo", "pt": "Vídeo cinematográfico"],
+
+    // Stems
+    "stems": ["en": "Stems", "es": "Pistas", "fr": "Pistes", "it": "Tracce", "de": "Stems", "pt": "Faixas"],
+    "stems_sub": ["en": "Download the separated instrument tracks for professional mixing.", "es": "Descarga las pistas de instrumentos separadas para una mezcla profesional.", "fr": "Téléchargez les pistes d'instruments séparées pour un mixage professionnel.", "it": "Scarica le tracce degli strumenti separate per un mix professionale.", "de": "Lade die getrennten Instrumentenspuren für professionelles Mixing herunter.", "pt": "Transfira as faixas de instrumentos separadas para mistura profissional."],
+    "stems_2": ["en": "Vocals + Instrumental", "es": "Voces + Instrumental", "fr": "Voix + Instrumental", "it": "Voci + Strumentale", "de": "Gesang + Instrumental", "pt": "Vozes + Instrumental"],
+    "stems_2_sub": ["en": "2 tracks · fast", "es": "2 pistas · rápido", "fr": "2 pistes · rapide", "it": "2 tracce · veloce", "de": "2 Spuren · schnell", "pt": "2 faixas · rápido"],
+    "stems_full": ["en": "Full split", "es": "División completa", "fr": "Séparation complète", "it": "Divisione completa", "de": "Vollständig", "pt": "Divisão completa"],
+    "stems_full_sub": ["en": "up to 12 tracks · drums, bass, guitar, keys…", "es": "hasta 12 pistas · batería, bajo, guitarra, teclados…", "fr": "jusqu'à 12 pistes · batterie, basse, guitare, claviers…", "it": "fino a 12 tracce · batteria, basso, chitarra, tastiere…", "de": "bis zu 12 Spuren · Drums, Bass, Gitarre, Keys…", "pt": "até 12 faixas · bateria, baixo, guitarra, teclados…"],
+    "stems_coming": ["en": "Stem separation is being switched on — it'll be live in the next update.", "es": "La separación de pistas se está activando; estará disponible en la próxima actualización.", "fr": "La séparation des pistes est en cours d'activation ; disponible à la prochaine mise à jour.", "it": "La separazione delle tracce si sta attivando; sarà disponibile nel prossimo aggiornamento.", "de": "Die Stem-Trennung wird aktiviert – im nächsten Update verfügbar.", "pt": "A separação de faixas está a ser ativada — estará disponível na próxima atualização."],
+
+    // Placeholders & misc
+    "prompt_ph_simple": ["en": "Describe your song\nA dreamy synth-pop track about a summer that never ends…", "es": "Describe tu canción\nUn tema synth-pop soñador sobre un verano que nunca termina…", "fr": "Décrivez votre chanson\nUn morceau synth-pop rêveur sur un été sans fin…", "it": "Descrivi la tua canzone\nUn brano synth-pop sognante su un'estate infinita…", "de": "Beschreibe deinen Song\nEin verträumter Synth-Pop-Track über einen endlosen Sommer…", "pt": "Descreva a sua canção\nUma faixa synth-pop sonhadora sobre um verão sem fim…"],
+    "prompt_ph_custom": ["en": "Describe the song idea…\nWe'll write the lyrics below — edit them anytime.", "es": "Describe la idea de la canción…\nEscribiremos la letra abajo; edítala cuando quieras.", "fr": "Décrivez l'idée de la chanson…\nNous écrirons les paroles ci-dessous — modifiez-les à tout moment.", "it": "Descrivi l'idea della canzone…\nScriveremo il testo qui sotto — modificalo quando vuoi.", "de": "Beschreibe die Song-Idee…\nWir schreiben unten den Text — du kannst ihn jederzeit ändern.", "pt": "Descreva a ideia da canção…\nEscreveremos a letra abaixo — edite-a quando quiser."],
+    "prompt_ph_photo": ["en": "Pick a photo, then describe its vibe…\nSunset road-trip, warm and nostalgic — your photo becomes the cover.", "es": "Elige una foto y describe su vibra…\nViaje al atardecer, cálido y nostálgico; tu foto será la portada.", "fr": "Choisissez une photo, puis décrivez son ambiance…\nRoad-trip au coucher du soleil, chaud et nostalgique — votre photo devient la pochette.", "it": "Scegli una foto e descrivi l'atmosfera…\nViaggio al tramonto, caldo e nostalgico — la tua foto diventa la copertina.", "de": "Wähle ein Foto und beschreibe die Stimmung…\nSonnenuntergangs-Roadtrip, warm und nostalgisch — dein Foto wird das Cover.", "pt": "Escolha uma foto e descreva a vibe…\nViagem ao pôr do sol, quente e nostálgica — a sua foto torna-se a capa."],
+    "lyrics_ph": ["en": "Tap ✨ to write lyrics from your idea, or type your own. Use [Verse], [Chorus], [Bridge] tags.", "es": "Toca ✨ para escribir la letra a partir de tu idea, o escríbela tú. Usa etiquetas [Verse], [Chorus], [Bridge].", "fr": "Touchez ✨ pour écrire les paroles à partir de votre idée, ou saisissez les vôtres. Utilisez les balises [Verse], [Chorus], [Bridge].", "it": "Tocca ✨ per scrivere il testo dalla tua idea, o scrivilo tu. Usa i tag [Verse], [Chorus], [Bridge].", "de": "Tippe auf ✨, um Text aus deiner Idee zu schreiben, oder gib eigenen ein. Verwende [Verse], [Chorus], [Bridge].", "pt": "Toque em ✨ para escrever a letra a partir da sua ideia, ou escreva a sua. Use as etiquetas [Verse], [Chorus], [Bridge]."],
+    "where_next_ph": ["en": "e.g. a big final chorus, a guitar solo, a calm outro…\nOr paste new lyrics.", "es": "p. ej. un gran estribillo final, un solo de guitarra, un cierre tranquilo…\nO pega nueva letra.", "fr": "ex. un grand refrain final, un solo de guitare, une fin calme…\nOu collez de nouvelles paroles.", "it": "es. un grande ritornello finale, un assolo di chitarra, un finale calmo…\nOppure incolla nuovo testo.", "de": "z. B. ein großer Schluss-Refrain, ein Gitarrensolo, ein ruhiges Outro…\nOder füge neuen Text ein.", "pt": "ex. um grande refrão final, um solo de guitarra, um final calmo…\nOu cole nova letra."],
+    "separating": ["en": "Separating… this can take a minute", "es": "Separando… puede tardar un minuto", "fr": "Séparation… cela peut prendre une minute", "it": "Separazione… può richiedere un minuto", "de": "Trennung… das kann eine Minute dauern", "pt": "A separar… pode demorar um minuto"],
+    "tracks": ["en": "tracks", "es": "pistas", "fr": "pistes", "it": "tracce", "de": "Spuren", "pt": "faixas"],
+    "video_caps": ["en": "MUSIC VIDEO", "es": "VIDEOCLIP", "fr": "CLIP VIDÉO", "it": "VIDEO MUSICALE", "de": "MUSIKVIDEO", "pt": "VIDEOCLIPE"],
+    "video_soon": ["en": "Cinematic video — coming soon", "es": "Video cinematográfico — próximamente", "fr": "Vidéo cinématique — bientôt disponible", "it": "Video cinematografico — in arrivo", "de": "Kinovideo — bald verfügbar", "pt": "Vídeo cinematográfico — em breve"]
+]

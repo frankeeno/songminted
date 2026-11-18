@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Song Minted AI — AI Services Technical Spec</title>
+<style>
+:root{--emerald:#34d399;--teal:#12b3a6;--gold:#f5c451;--gold2:#e0a83a;--ink:#05070a;
+  --grad:linear-gradient(135deg,#3ee0a6,#0ea5a4);--grad-gold:linear-gradient(135deg,#f9dd8a,#e0a83a);}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;color:#eef4f7;
+  background:radial-gradient(900px 600px at 12% -5%,#0f3b34,transparent 60%),
+    radial-gradient(900px 700px at 96% 8%,#2a2410,transparent 55%),#05070a;min-height:100vh;padding:44px 22px 90px;line-height:1.6}
+.wrap{max-width:1000px;margin:0 auto}
+.kicker{font-size:13px;letter-spacing:4px;font-weight:800;color:var(--gold);text-transform:uppercase}
+h1{font-size:46px;font-weight:800;letter-spacing:-1.4px;margin:8px 0 8px}
+h1 b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{color:#9fb0b8;font-size:18px;max-width:680px}
+.section-h{font-size:15px;letter-spacing:3px;font-weight:800;color:#7f929c;text-transform:uppercase;
+  margin:52px 0 20px;display:flex;align-items:center;gap:14px}
+.section-h::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.14),transparent)}
+.glass{position:relative;border-radius:24px;background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);
+  box-shadow:0 16px 40px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.3);overflow:hidden}
+.pad{padding:24px 26px}
+h3.blk{font-size:22px;font-weight:800;margin-bottom:12px;letter-spacing:-.3px}
+h3.blk .em{color:var(--gold)}
+p.body{color:#c3ced4;font-size:15.5px;margin-bottom:12px}
+b.hl{color:#eef4f7}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+ul.clean{list-style:none;display:flex;flex-direction:column;gap:11px;margin:6px 0}
+ul.clean li{display:flex;gap:11px;font-size:15px;color:#c3ced4;align-items:flex-start}
+ul.clean li .ck{color:var(--emerald);font-weight:900;flex-shrink:0}
+ul.clean li .no{color:#ff6b8b;font-weight:900;flex-shrink:0}
+ul.clean li .no2{color:#f5c451;font-weight:900;flex-shrink:0}
+.ctable{width:100%;border-collapse:collapse;font-size:14px}
+.ctable th,.ctable td{text-align:left;padding:12px 12px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.ctable th{color:#8b9ca4;font-size:11.5px;letter-spacing:1px;text-transform:uppercase}
+.ctable td b{color:#eef4f7}
+.ctable .win{background:rgba(52,211,153,.08)}
+.ctable .win td:first-child{color:var(--emerald);font-weight:800}
+.tag{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:11px;margin-left:6px}
+.tag.go{background:var(--emerald);color:#04231d}
+.tag.warn{background:var(--grad-gold);color:#241a05}
+.tag.stop{background:#ff6b8b;color:#2a0a12}
+
+/* flow diagram */
+.flow{display:flex;flex-direction:column;gap:12px}
+.frow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.node{border-radius:16px;padding:14px 16px;font-size:14px;font-weight:700;border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.05);min-width:120px}
+.node .t{font-size:12px;color:#8b9ca4;font-weight:700;letter-spacing:.5px;display:block;margin-bottom:3px}
+.node.app{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+.node.back{border-color:rgba(245,196,81,.4);background:rgba(245,196,81,.08)}
+.node.ext{border-color:rgba(120,140,255,.4);background:rgba(120,140,255,.08)}
+.node.store{border-color:rgba(255,255,255,.2)}
+.arrow{color:var(--gold);font-weight:900;font-size:18px}
+.step{display:flex;gap:14px;align-items:flex-start;margin-bottom:12px}
+.stepnum{width:34px;height:34px;border-radius:11px;background:var(--grad);color:#04231d;font-weight:800;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+.callout{border-left:3px solid var(--emerald);padding:4px 0 4px 16px;margin:14px 0;color:#c3ced4;font-size:15px}
+.callout.gold{border-color:var(--gold)}
+.callout.rose{border-color:#ff6b8b}
+.phase{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+.phasetag{font-size:12px;font-weight:800;padding:5px 12px;border-radius:14px;background:var(--grad);color:#04231d;flex-shrink:0;min-width:88px;text-align:center}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:1px 7px;color:#8ff0cf}
+.costbox{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
+.costc{text-align:center;padding:18px}
+.costc .amt{font-size:28px;font-weight:800}.costc .amt.g{color:var(--emerald)}.costc .lbl{font-size:12.5px;color:#8b9ca4;margin-top:4px}
+.foot{margin-top:60px;color:#7f929c;font-size:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:24px}
+@media(max-width:760px){.grid2,.grid3,.costbox{grid-template-columns:1fr}h1{font-size:34px}.frow{flex-direction:column;align-items:stretch}.arrow{transform:rotate(90deg);text-align:center}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">Technical Spec · AI Services · v1.0</div>
+  <h1>Song Minted <b>AI Services</b></h1>
+  <p class="lede">How the app actually produces a downloadable, user-owned song. Provider selection, system architecture, generation pipeline, credits, licensing, and cost — the build brief for your developer.</p>
+
+  <!-- PRINCIPLE -->
+  <div class="section-h">00 · Guiding Principle</div>
+  <div class="glass pad">
+    <p class="body" style="margin:0"><b class="hl">Don't train a model. Don't call vendors from the phone.</b> Building a music model costs millions and years. Instead, integrate <b class="hl">licensed third-party APIs</b> behind a <b class="hl">thin backend of your own</b> that holds the keys, meters credits, and stores the finished audio. This is how every App Store music app in your screenshots is built.</p>
+  </div>
+
+  <!-- PROVIDERS -->
+  <div class="section-h">01 · Provider Selection</div>
+  <div class="glass pad" style="margin-bottom:16px">
+    <table class="ctable">
+      <tr><th>Provider</th><th>Role</th><th>Licensing</th><th>Cost</th><th>Verdict</th></tr>
+      <tr class="win"><td>Mureka API</td><td>Song generation (music + vocals)</td><td>Official; paid tier assigns commercial rights to you</td><td>~$8/mo consumer (~400 songs); API usage-based</td><td><b>Launch default</b><span class="tag go">USE</span></td></tr>
+      <tr class="win"><td>ElevenLabs</td><td>Voice cloning + optional premium music</td><td>Official; label deals; perpetual commercial rights on paid</td><td>Cloning from $5/mo · Music ~$0.15/min</td><td><b>Voice engine</b><span class="tag go">USE</span></td></tr>
+      <tr class="win"><td>EvoLink</td><td>Aggregator gateway — Suno v4/v4.5/v5 + image/video/LLM on one key</td><td>Unofficial Suno access; no written commercial guarantee</td><td>~$0.118/song (2 tracks/call)</td><td><b>MVP / free tier</b><span class="tag warn">SPEED</span></td></tr>
+      <tr><td>Udio</td><td>Song generation</td><td>UMG-licensed platform arriving 2026</td><td>Consumer subs up to ~$65/mo</td><td>Watch for public API<span class="tag warn">WAIT</span></td></tr>
+      <tr><td>Other Suno wrappers<br>(sunoapi.org, MusicAPI)</td><td>Song generation</td><td>Reverse-engineered, "as-is, at your own risk"</td><td>Cheapest per song</td><td>Demo only, don't ship<span class="tag stop">RISK</span></td></tr>
+    </table>
+  </div>
+  <div class="grid2">
+    <div class="glass pad"><h3 class="blk">Recommended v1 stack</h3>
+      <ul class="clean">
+        <li><span class="ck">◆</span><span><b class="hl">Mureka</b> for the "Mint Song" flow — affordable, licensed, royalty-free.</span></li>
+        <li><span class="ck">◆</span><span><b class="hl">ElevenLabs</b> for "Sing in your own voice" (cloning) and covers.</span></li>
+        <li><span class="ck">◆</span><span>Later: add a premium <b class="hl">"Ultra"</b> tier powered by ElevenLabs Music for audiophile output.</span></li>
+      </ul></div>
+    <div class="glass pad"><h3 class="blk">Why not the cheapest?</h3>
+      <p class="body" style="margin:0">There is <b class="hl">no official Suno API</b>. The wrappers can break without notice and disclaim all warranties — a real liability once you're charging users and Apple is reviewing your app. Quality between licensed options is now close enough that your <b class="hl">brand, voice cloning, and Explore feed</b> — not raw audio — are the differentiator.</p></div>
+  </div>
+
+  <!-- EVOLINK -->
+  <div class="section-h">01b · The EvoLink Angle</div>
+  <div class="glass pad" style="margin-bottom:16px">
+    <p class="body"><b class="hl">EvoLink (evolink.ai)</b> is an aggregator gateway: one API key routes to Suno v4/v4.5/<b class="hl">v5</b> plus image, video, and LLM models. It's the polished version of the "Suno wrapper" path — cheap, top audio quality, and it maps cleanly onto this architecture (async submit → poll <span class="mono">/v1/tasks/{id}</span> or webhook, 72-hour audio URLs, Personas incl. a V5 <span class="mono">voice_persona</span>).</p>
+    <div class="grid2" style="margin-top:6px">
+      <div>
+        <h3 class="blk" style="font-size:18px">Why it's tempting</h3>
+        <ul class="clean">
+          <li><span class="ck">✓</span><span><b class="hl">Best quality, ~12¢/song</b> (2 tracks per call) — Suno v5 is the "wow" audio.</span></li>
+          <li><span class="ck">✓</span><span><b class="hl">One key powers the whole app:</b> songs (Suno), cover art (image models), music-video-from-photo (OmniHuman/Veo/Sora), lyric writing (LLM).</span></li>
+          <li><span class="ck">✓</span><span>Integration matches the prototype's async progress screen exactly.</span></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="blk" style="font-size:18px">The catch</h3>
+        <ul class="clean">
+          <li><span class="no2">!</span><span><b class="hl">Unofficial Suno access</b> — same ToS gray area; their FAQ says "review upstream provider requirements."</span></li>
+          <li><span class="no2">!</span><span><b class="hl">No written commercial-rights guarantee</b> like Mureka/ElevenLabs give.</span></li>
+          <li><span class="no2">!</span><span>Beta models "may experience occasional downtime."</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout gold"><b class="hl">Verdict:</b> Use EvoLink to build and launch the MVP fast and cheap — and for the free tier/demos. Keep the backend <b class="hl">provider-agnostic</b> so paid users (where you promise ownership + commercial rights) can be routed to Mureka or ElevenLabs. Same app, swap the engine.</div>
+    <p class="body" style="margin:14px 0 0">Design implication: define one internal <span class="mono">generateSong(params)</span> interface in the backend with pluggable adapters — <span class="mono">EvoLinkAdapter</span>, <span class="mono">MurekaAdapter</span>, <span class="mono">ElevenLabsAdapter</span> — chosen per request by the user's tier. The app never knows or cares which engine ran.</p>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <div class="section-h">02 · System Architecture</div>
+  <div class="glass pad" style="margin-bottom:16px">
+    <div class="flow">
+      <div class="frow">
+        <div class="node app"><span class="t">iOS APP</span>Prompt · style · credits UI</div>
+        <span class="arrow">→</span>
+        <div class="node back"><span class="t">YOUR BACKEND</span>Auth · credits · job queue</div>
+        <span class="arrow">→</span>
+        <div class="node ext"><span class="t">AI PROVIDER</span>Mureka / ElevenLabs</div>
+      </div>
+      <div class="frow" style="padding-left:0">
+        <div class="node ext"><span class="t">AI PROVIDER</span>Returns audio (30–120s, async)</div>
+        <span class="arrow">→</span>
+        <div class="node back"><span class="t">BACKEND</span>Saves file · updates job</div>
+        <span class="arrow">→</span>
+        <div class="node store"><span class="t">CLOUD STORAGE</span>R2 / S3 → download URL</div>
+        <span class="arrow">→</span>
+        <div class="node app"><span class="t">APP</span>Player + Download</div>
+      </div>
+    </div>
+    <div class="callout rose" style="margin-top:20px"><b class="hl">The golden rule:</b> API keys live <b class="hl">only</b> on the backend. If they ship in the app, anyone can extract them and burn your credits.</div>
+  </div>
+  <div class="grid3">
+    <div class="glass pad"><h3 class="blk">🎛️ <span class="em">Backend</span></h3><p class="body" style="margin:0">Auth, user records, credit ledger, job queue, provider calls, webhooks. <b class="hl">Supabase or Firebase</b> covers auth + DB + storage + serverless functions with minimal code.</p></div>
+    <div class="glass pad"><h3 class="blk">🗄️ <span class="em">Storage</span></h3><p class="body" style="margin:0">Finished MP3/WAV in <b class="hl">Cloudflare R2</b> or <b class="hl">AWS S3</b>. Serve via short-lived signed URLs so only the owner can download.</p></div>
+    <div class="glass pad"><h3 class="blk">💳 <span class="em">Payments</span></h3><p class="body" style="margin:0">Apple <b class="hl">In-App Purchase</b> for subscriptions, managed with <b class="hl">RevenueCat</b>. Backend trusts RevenueCat's entitlement to unlock credits.</p></div>
+  </div>
+
+  <!-- GENERATION PIPELINE -->
+  <div class="section-h">03 · The "Mint Song" Pipeline</div>
+  <div class="glass pad">
+    <div class="step"><div class="stepnum">1</div><div><b class="hl">App submits.</b> Sends prompt/lyrics + style + genre + mood + voice to <span class="mono">POST /mint</span> with the user's auth token.</div></div>
+    <div class="step"><div class="stepnum">2</div><div><b class="hl">Backend checks credits.</b> If the user has ≥1 credit, it deducts one and creates a <span class="mono">job</span> record with status <span class="mono">queued</span>. If not → returns "paywall."</div></div>
+    <div class="step"><div class="stepnum">3</div><div><b class="hl">Backend calls the provider</b> (Mureka) with your server-side key, gets a provider job id, stores it, sets status <span class="mono">generating</span>.</div></div>
+    <div class="step"><div class="stepnum">4</div><div><b class="hl">App polls</b> <span class="mono">GET /job/{id}</span> every ~2s (this is exactly the progress screen the prototype already mocks), or the backend receives a provider webhook.</div></div>
+    <div class="step"><div class="stepnum">5</div><div><b class="hl">On completion</b> the backend downloads the audio, stores it in R2/S3, writes the song to the user's Vault, and returns a signed <b class="hl">download URL</b>.</div></div>
+    <div class="step" style="margin-bottom:0"><div class="stepnum">6</div><div><b class="hl">App plays & offers download.</b> On failure, the backend <b class="hl">refunds the credit</b> automatically.</div></div>
+  </div>
+
+  <!-- VOICE CLONING -->
+  <div class="section-h">04 · Voice Cloning & Covers</div>
+  <div class="grid2">
+    <div class="glass pad"><h3 class="blk">Enrolment (once)</h3>
+      <ul class="clean">
+        <li><span class="ck">1</span><span>User records a short voice sample in-app.</span></li>
+        <li><span class="ck">2</span><span>Backend sends it to <b class="hl">ElevenLabs</b> → gets a private <span class="mono">voice_id</span> stored against the user.</span></li>
+        <li><span class="ck">3</span><span>Require an explicit <b class="hl">consent checkbox</b> ("this is my own voice") — legal + Apple requirement.</span></li>
+      </ul></div>
+    <div class="glass pad"><h3 class="blk">Covers</h3>
+      <p class="body" style="margin:0">For "sing any song," the user's <span class="mono">voice_id</span> is applied to a chosen track. <b class="hl">Only allow the user's own voice or your licensed AI personas</b> (Nova, Blaze, Onyx…). Never offer real named celebrities — that's the lawsuit vector. Keep personas clearly fictional.</p></div>
+  </div>
+
+  <!-- CREDITS -->
+  <div class="section-h">05 · Credits & Monetisation</div>
+  <div class="glass pad">
+    <p class="body"><b class="hl">1 credit = 1 mint.</b> New users get a few free credits (feel the magic); credits refill with a Pro subscription or one-time packs.</p>
+    <ul class="clean">
+      <li><span class="ck">◉</span><span><b class="hl">Free:</b> 3 starter credits, watermarked or standard quality.</span></li>
+      <li><span class="ck">◉</span><span><b class="hl">Pro</b> (Weekly €5.99 · Yearly €49.99 · Lifetime €79.99): unlimited/large monthly credit bucket, premium voices, HD + commercial license.</span></li>
+      <li><span class="ck">◉</span><span><b class="hl">Packs:</b> one-time IAP (e.g. €7.99 premium-voice bundle) for non-subscribers.</span></li>
+    </ul>
+    <div class="callout gold"><b class="hl">Protect your margin:</b> even "unlimited" plans need a soft fair-use cap (e.g. a generous daily credit ceiling) so a handful of power users can't run your provider bill past their subscription.</div>
+  </div>
+
+  <!-- COST -->
+  <div class="section-h">06 · Unit Economics</div>
+  <div class="glass pad">
+    <p class="body">Illustrative, per finished ~3-minute song:</p>
+    <div class="costbox">
+      <div class="glass costc"><div class="amt g">~$0.05</div><div class="lbl">Mureka (est. per song)</div></div>
+      <div class="glass costc"><div class="amt g">~$0.45</div><div class="lbl">ElevenLabs Music (3 min @ $0.15)</div></div>
+      <div class="glass costc"><div class="amt">€49.99</div><div class="lbl">Yearly Pro revenue / user</div></div>
+    </div>
+    <p class="body" style="margin-top:16px">A Yearly Pro user would need to mint <b class="hl">hundreds of songs</b> before eroding margin on Mureka, and dozens on ElevenLabs Music — hence the fair-use cap. Add fixed monthly floors: Supabase/Firebase (free→~$25/mo early), R2/S3 storage (pennies/GB), RevenueCat (free under ~$2.5k MTR). <b class="hl">Early monthly infra ≈ $30–80</b> before scale.</p>
+  </div>
+
+  <!-- LEGAL -->
+  <div class="section-h">07 · Legal & Compliance Checklist</div>
+  <div class="grid2">
+    <div class="glass pad"><h3 class="blk">Do</h3>
+      <ul class="clean">
+        <li><span class="ck">✓</span><span>Use officially-licensed providers; pass their commercial rights to paying users in your Terms.</span></li>
+        <li><span class="ck">✓</span><span>Require voice-consent confirmation before cloning.</span></li>
+        <li><span class="ck">✓</span><span>Add content moderation on prompts/lyrics (hate, explicit, minors).</span></li>
+        <li><span class="ck">✓</span><span>Publish clear Terms, Privacy, and a Licensing page (already linked on the landing page).</span></li>
+      </ul></div>
+    <div class="glass pad"><h3 class="blk">Don't</h3>
+      <ul class="clean">
+        <li><span class="no">✕</span><span>Offer real named-celebrity voices or "in the style of [artist]" as a selling point.</span></li>
+        <li><span class="no">✕</span><span>Ship provider API keys inside the app binary.</span></li>
+        <li><span class="no">✕</span><span>Rely on unofficial Suno wrappers for production.</span></li>
+        <li><span class="no">✕</span><span>Let users clone a voice that isn't theirs without permission.</span></li>
+      </ul></div>
+  </div>
+
+  <!-- ROADMAP -->
+  <div class="section-h">08 · Build Roadmap</div>
+  <div class="glass pad">
+    <div class="phase"><span class="phasetag">Phase 1</span><div><b class="hl">Backend spine.</b> Supabase project: auth, users, credit ledger, <span class="mono">/mint</span> + <span class="mono">/job</span> functions, R2 storage, and a pluggable <span class="mono">generateSong()</span> adapter. Wire the <b class="hl">EvoLink adapter first</b> (fastest + cheapest) to ship a working end-to-end song from the existing prototype UI; keep Mureka/ElevenLabs adapters behind the same interface.</div></div>
+    <div class="phase"><span class="phasetag">Phase 2</span><div><b class="hl">Monetisation.</b> Apple IAP via RevenueCat, paywall, credit refills, free-tier caps.</div></div>
+    <div class="phase"><span class="phasetag">Phase 3</span><div><b class="hl">Voice + covers.</b> ElevenLabs enrolment, consent, cover flow with licensed personas.</div></div>
+    <div class="phase" style="margin-bottom:0"><span class="phasetag">Phase 4</span><div><b class="hl">Community + premium.</b> Explore feed publishing, likes/plays, and the ElevenLabs-powered "Ultra" quality tier.</div></div>
+  </div>
+
+  <div class="foot">
+    <b style="color:#c3ced4">Song Minted AI</b> — AI Services Technical Spec v1.0 · songminted.com<br>
+    Recommended path: <b style="color:#8ff0cf">Mureka + ElevenLabs on a managed (Supabase/Firebase) backend</b>. This document is the brief a developer (or I, in a build session) can implement against.
+  </div>
+</div>
+</body>
+</html>

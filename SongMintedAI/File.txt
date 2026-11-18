@@ -1,0 +1,1 @@
+Yes, you make me think I need those custom sliders where I can tell the API to be faithful to the audio, be faithful to the style, or just be weird, just like Suno does. It's got three slides to personalize how much the API has to stick to the original. 

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Song Minted — Liquid Glass Brand Kit</title>
+<style>
+:root{
+  --emerald:#34d399;--teal:#12b3a6;--gold:#f5c451;--gold2:#e0a83a;
+  --ink:#05070a;--ink2:#0b1016;
+  --grad:linear-gradient(135deg,#3ee0a6,#0ea5a4);
+  --grad-gold:linear-gradient(135deg,#f9dd8a,#e0a83a);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;
+  color:#eef4f7;background:
+    radial-gradient(900px 600px at 15% -5%,#0f3b34,transparent 60%),
+    radial-gradient(900px 700px at 95% 10%,#2a2410,transparent 55%),
+    radial-gradient(1000px 800px at 50% 110%,#0a2b3a,transparent 60%),
+    #05070a;
+  min-height:100vh;padding:44px 22px 80px;
+}
+.wrap{max-width:1120px;margin:0 auto}
+.kicker{font-size:13px;letter-spacing:4px;font-weight:800;color:var(--gold);text-transform:uppercase}
+h1{font-size:52px;font-weight:800;letter-spacing:-1.5px;margin:8px 0 6px}
+h1 b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{color:#9fb0b8;font-size:18px;max-width:640px;line-height:1.5}
+.domain{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:9px 16px;border-radius:30px;
+  font-size:14px;font-weight:700;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);
+  backdrop-filter:blur(18px)}
+.domain .dot{width:8px;height:8px;border-radius:50%;background:var(--emerald);box-shadow:0 0 10px var(--emerald)}
+
+.section-h{font-size:15px;letter-spacing:3px;font-weight:800;color:#7f929c;text-transform:uppercase;
+  margin:56px 0 20px;display:flex;align-items:center;gap:14px}
+.section-h::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.14),transparent)}
+
+/* liquid glass base */
+.glass{position:relative;border-radius:30px;background:linear-gradient(160deg,rgba(255,255,255,.12),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(26px) saturate(160%);-webkit-backdrop-filter:blur(26px) saturate(160%);
+  box-shadow:0 20px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -18px 40px rgba(0,0,0,.25);overflow:hidden}
+.glass::before{content:"";position:absolute;top:-40%;left:-20%;width:80%;height:120%;
+  background:radial-gradient(closest-side,rgba(255,255,255,.4),transparent 70%);filter:blur(14px);opacity:.5;pointer-events:none}
+
+/* logo option cards */
+.logos{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+.logocard{padding:30px}
+.optlabel{position:absolute;top:16px;right:18px;font-size:12px;font-weight:800;letter-spacing:1px;color:#cbd6db;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);padding:5px 11px;border-radius:20px}
+.stage{height:230px;border-radius:24px;display:flex;align-items:center;justify-content:center;position:relative;
+  background:radial-gradient(120% 120% at 30% 20%,rgba(52,211,153,.10),transparent 55%),
+    radial-gradient(120% 120% at 80% 90%,rgba(245,196,81,.10),transparent 55%),#080d12;
+  border:1px solid rgba(255,255,255,.06);overflow:hidden}
+.stage .grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:28px 28px;mask:radial-gradient(circle at 50% 50%,#000,transparent 75%)}
+.lname{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-top:20px}
+.lname b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ldesc{color:#95a6ae;font-size:14px;margin-top:6px;line-height:1.5}
+.wordmark{display:flex;align-items:center;gap:14px}
+.wordmark .wtxt{font-size:30px;font-weight:800;letter-spacing:-.5px}
+.wordmark .wtxt b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wordmark .wtxt sup{font-size:11px;color:var(--gold);font-weight:800}
+
+/* glass icon squircle */
+.gicon{width:112px;height:112px;border-radius:28px;position:relative;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 18px 40px rgba(0,0,0,.5),inset 0 2px 4px rgba(255,255,255,.5),inset 0 -14px 30px rgba(0,0,0,.35)}
+.gicon.sm{width:60px;height:60px;border-radius:16px}
+.gicon.tiny{width:40px;height:40px;border-radius:11px}
+.gicon .spec{position:absolute;top:6px;left:12px;right:12px;height:38%;border-radius:20px 20px 40px 40px;
+  background:linear-gradient(180deg,rgba(255,255,255,.55),transparent);filter:blur(1px);pointer-events:none}
+.gicon svg{position:relative;z-index:2}
+.icemerald{background:linear-gradient(160deg,#3ee0a6,#0b8f86 70%,#075e58);}
+.icgold{background:linear-gradient(160deg,#ffe6a0,#e0a83a 65%,#a9741d);}
+.icdark{background:linear-gradient(160deg,rgba(60,80,90,.9),rgba(10,20,26,.9));border:1px solid rgba(255,255,255,.14)}
+.icmixed{background:linear-gradient(160deg,#3ee0a6,#0ea5a4 55%,#e0a83a);}
+
+/* app icon grid */
+.iconrow{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-end}
+.iconbig{width:150px;height:150px;border-radius:36px}
+.iconbig .spec{border-radius:26px 26px 50px 50px}
+.icaption{text-align:center;font-size:13px;color:#93a4ac;margin-top:12px;font-weight:600}
+
+/* palette */
+.palette{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.swatch{border-radius:22px;height:150px;padding:16px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden}
+.swatch .hex{font-weight:800;font-size:15px}
+.swatch .nm{font-size:13px;opacity:.85;margin-top:2px}
+.swatch .glass-chip{position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:12px;
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(10px)}
+
+/* type */
+.typecard{padding:30px}
+.type-emerald{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tspec{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;margin-bottom:8px}
+
+/* usage lockups */
+.locks{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+.lockcell{padding:26px;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+.lockcell .cap{font-size:12px;color:#8b9ca4;font-weight:700;letter-spacing:1px}
+.mono-dark{background:#05070a !important}
+.mono-light{background:#eef4f7 !important;color:#05070a}
+.mono-light .wtxt,.mono-light .wtxt b{color:#05070a !important;-webkit-text-fill-color:#05070a}
+
+.foot{margin-top:60px;color:#7f929c;font-size:14px;line-height:1.6;border-top:1px solid rgba(255,255,255,.08);padding-top:24px}
+@media(max-width:720px){.logos,.palette{grid-template-columns:1fr 1fr}.locks{grid-template-columns:1fr}h1{font-size:38px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">Brand Kit · Liquid Glass</div>
+  <h1>Song <b>Minted</b> AI</h1>
+  <p class="lede">A translucent, light-bending identity system built in Apple's Liquid Glass language — frosted depth, specular highlights and a mint-to-gold spectrum. Four logo directions below; pick one and I'll finalize it.</p>
+  <div class="domain"><span class="dot"></span> songminted.com</div>
+
+  <!-- LOGO OPTIONS -->
+  <div class="section-h">Logo Directions</div>
+  <div class="logos">
+
+    <!-- Option A: Gem -->
+    <div class="glass logocard">
+      <div class="optlabel">Option A</div>
+      <div class="stage"><div class="grid-bg"></div>
+        <div class="gicon icemerald"><div class="spec"></div>
+          <svg width="60" height="60" viewBox="0 0 48 48" fill="none">
+            <path d="M24 4L42 18 24 44 6 18Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M6 18h36M24 4v40M15 18l9 26M33 18l-9 26" stroke="#fff" stroke-width="1.2" opacity=".8"/>
+            <circle cx="24" cy="21" r="3" fill="#fff"/><path d="M24 24v7" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+      <div class="lname">The <b>Mint Gem</b></div>
+      <div class="ldesc">A faceted glass diamond with an embedded note — "minting" your sound into something precious. Reads instantly at 40px. Recommended.</div>
+    </div>
+
+    <!-- Option B: Coin -->
+    <div class="glass logocard">
+      <div class="optlabel">Option B</div>
+      <div class="stage"><div class="grid-bg"></div>
+        <div class="gicon icgold"><div class="spec"></div>
+          <svg width="62" height="62" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="19" fill="rgba(255,255,255,.16)" stroke="#fff" stroke-width="1.6"/>
+            <circle cx="24" cy="24" r="14" stroke="#fff" stroke-width="1" opacity=".6"/>
+            <path d="M20 16v13a4 4 0 1 1-2-3.4V18l10-2v9a4 4 0 1 1-2-3.4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
+      </div>
+      <div class="lname">The <b>Sound Coin</b></div>
+      <div class="ldesc">A minted gold coin stamped with a musical note — literal "song minting." Premium, collectible, great for tokens/credits in-app.</div>
+    </div>
+
+    <!-- Option C: Waveform note -->
+    <div class="glass logocard">
+      <div class="optlabel">Option C</div>
+      <div class="stage"><div class="grid-bg"></div>
+        <div class="gicon icmixed"><div class="spec"></div>
+          <svg width="64" height="64" viewBox="0 0 48 48" fill="none">
+            <g stroke="#fff" stroke-width="3.4" stroke-linecap="round">
+              <path d="M10 24v0"/><path d="M16 18v12"/><path d="M22 12v24"/><path d="M28 16v16"/><path d="M34 20v8"/><path d="M39 23v2"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+      <div class="lname">The <b>Glass Wave</b></div>
+      <div class="ldesc">A frosted equalizer waveform — energetic, modern, audio-native. Animates beautifully as a loading/generating state.</div>
+    </div>
+
+    <!-- Option D: SM monogram -->
+    <div class="glass logocard">
+      <div class="optlabel">Option D</div>
+      <div class="stage"><div class="grid-bg"></div>
+        <div class="gicon icdark"><div class="spec"></div>
+          <svg width="60" height="60" viewBox="0 0 48 48" fill="none">
+            <defs><linearGradient id="smg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#3ee0a6"/><stop offset="1" stop-color="#e0a83a"/></linearGradient></defs>
+            <path d="M30 15c-3-3-11-3-11 2 0 6 12 3 12 9 0 5-8 6-12 2" stroke="url(#smg)" stroke-width="3.4" stroke-linecap="round" fill="none"/>
+            <path d="M15 34V20l6 8 6-8v14" stroke="url(#smg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".9"/>
+          </svg>
+        </div>
+      </div>
+      <div class="lname">The <b>SM Monogram</b></div>
+      <div class="ldesc">A minimalist "SM" mark on smoked glass — versatile and understated for favicons, watermarks, and merch.</div>
+    </div>
+  </div>
+
+  <!-- WORDMARK LOCKUPS -->
+  <div class="section-h">Wordmark & Lockups</div>
+  <div class="locks">
+    <div class="glass lockcell">
+      <div class="wordmark"><div class="gicon tiny icemerald"><div class="spec"></div>
+        <svg width="20" height="20" viewBox="0 0 48 48"><path d="M24 4L42 18 24 44 6 18Z" fill="rgba(255,255,255,.2)" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg></div>
+        <div class="wtxt">Song<b>Minted</b><sup>AI</sup></div></div>
+      <div class="cap">PRIMARY — HORIZONTAL</div>
+    </div>
+    <div class="glass lockcell mono-dark">
+      <div class="wordmark" style="flex-direction:column;gap:10px"><div class="gicon sm icmixed"><div class="spec"></div>
+        <svg width="30" height="30" viewBox="0 0 48 48"><path d="M24 4L42 18 24 44 6 18Z" fill="rgba(255,255,255,.2)" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg></div>
+        <div class="wtxt" style="font-size:24px">Song<b>Minted</b></div></div>
+      <div class="cap">STACKED</div>
+    </div>
+    <div class="glass lockcell mono-light">
+      <div class="wordmark"><div class="gicon tiny" style="background:#05070a"><div class="spec" style="opacity:.3"></div>
+        <svg width="20" height="20" viewBox="0 0 48 48"><path d="M24 4L42 18 24 44 6 18Z" fill="none" stroke="#34d399" stroke-width="2.4" stroke-linejoin="round"/></svg></div>
+        <div class="wtxt" style="font-size:24px">SongMinted</div></div>
+      <div class="cap">LIGHT / MONO</div>
+    </div>
+  </div>
+
+  <!-- APP ICONS -->
+  <div class="section-h">App Icon Set (Squircle)</div>
+  <div class="iconrow">
+    <div><div class="gicon iconbig icemerald"><div class="spec"></div>
+      <svg width="82" height="82" viewBox="0 0 48 48" fill="none">
+        <path d="M24 4L42 18 24 44 6 18Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M6 18h36M24 4v40" stroke="#fff" stroke-width="1" opacity=".7"/>
+        <circle cx="24" cy="21" r="3" fill="#fff"/><path d="M24 24v7" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+      <div class="icaption">Primary · Emerald</div></div>
+    <div><div class="gicon iconbig icgold"><div class="spec"></div>
+      <svg width="84" height="84" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="18" fill="rgba(255,255,255,.14)" stroke="#fff" stroke-width="1.6"/>
+        <path d="M20 16v13a4 4 0 1 1-2-3.4V18l10-2v9a4 4 0 1 1-2-3.4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="icaption">Alt · Gold Coin</div></div>
+    <div><div class="gicon iconbig icdark"><div class="spec"></div>
+      <svg width="80" height="80" viewBox="0 0 48 48" fill="none">
+        <g stroke="url(#smg2)" stroke-width="3.6" stroke-linecap="round"><path d="M14 20v8"/><path d="M20 14v20"/><path d="M26 17v14"/><path d="M32 21v6"/></g>
+        <defs><linearGradient id="smg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3ee0a6"/><stop offset="1" stop-color="#e0a83a"/></linearGradient></defs></svg></div>
+      <div class="icaption">Dark · Glass Wave</div></div>
+    <div><div class="gicon iconbig" style="background:linear-gradient(160deg,#0b1016,#05070a);border:1px solid rgba(255,255,255,.14)"><div class="spec" style="opacity:.4"></div>
+      <svg width="80" height="80" viewBox="0 0 48 48" fill="none">
+        <path d="M24 6L40 18 24 42 8 18Z" fill="none" stroke="url(#smg3)" stroke-width="2.4" stroke-linejoin="round"/>
+        <defs><linearGradient id="smg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3ee0a6"/><stop offset="1" stop-color="#e0a83a"/></linearGradient></defs></svg></div>
+      <div class="icaption">Midnight · Outline</div></div>
+  </div>
+
+  <!-- PALETTE -->
+  <div class="section-h">Color System</div>
+  <div class="palette">
+    <div class="swatch" style="background:linear-gradient(160deg,#3ee0a6,#0ea5a4)"><div class="glass-chip"></div><div><div class="hex" style="color:#04231d">#34D399</div><div class="nm" style="color:#04231d">Mint — Primary</div></div></div>
+    <div class="swatch" style="background:linear-gradient(160deg,#12b3a6,#0a6b63)"><div class="glass-chip"></div><div><div class="hex">#12B3A6</div><div class="nm">Teal — Secondary</div></div></div>
+    <div class="swatch" style="background:linear-gradient(160deg,#f9dd8a,#e0a83a)"><div class="glass-chip"></div><div><div class="hex" style="color:#241a05">#F5C451</div><div class="nm" style="color:#241a05">Gold — Accent</div></div></div>
+    <div class="swatch" style="background:linear-gradient(160deg,#141c24,#05070a)"><div class="glass-chip"></div><div><div class="hex">#05070A</div><div class="nm">Obsidian — Base</div></div></div>
+  </div>
+  <p class="ldesc" style="margin-top:16px">Glass surfaces use white at 8–16% opacity over these colors with <b>backdrop-blur 26px, saturate 160%</b>, a 1px inner top highlight, and a soft specular sweep — the core recipe for the Liquid Glass look.</p>
+
+  <!-- TYPOGRAPHY -->
+  <div class="section-h">Typography</div>
+  <div class="glass typecard">
+    <div class="tspec"><span style="font-size:44px;font-weight:800;letter-spacing:-1px">Aa</span>
+      <span class="type-emerald" style="font-size:44px;font-weight:800;letter-spacing:-1px">Gg</span>
+      <span style="color:#8b9ca4;font-size:15px">SF Pro Display / Inter — headings, 800 weight, tight tracking</span></div>
+    <div style="height:1px;background:rgba(255,255,255,.1);margin:18px 0"></div>
+    <div style="font-size:16px;color:#c3ced4;line-height:1.6">Body: SF Pro Text / Inter, 400–600. Numerals and credit counts use tabular figures. Set headings in a mint-to-teal gradient on dark; keep body a cool off-white <b style="color:#eef4f7">#EEF4F7</b>.</div>
+  </div>
+
+  <div class="foot">
+    <b style="color:#c3ced4">Song Minted AI</b> — Liquid Glass brand kit · songminted.com<br>
+    Four logo directions (A recommended). Tell me which you want and I'll deliver production files: SVG logo pack, 1024px App Store icon, favicon set, and a matching splash screen.
+  </div>
+</div>
+</body>
+</html>

@@ -178,7 +178,7 @@ function studio(){
 
 function coverKnobs(){
   return `<div class="fine card" style="margin:16px 0">
-      <p class="muted" style="margin:0 0 10px">Suno-style cover. High audio = keep melody, vocals, lyrics. Low weirdness = stay faithful.</p>
+      <p class="muted" style="margin:0 0 10px">High audio = hear melody, harmony and lyrics from the file (any language). Low weirdness = stay faithful.</p>
       <div class="row"><span>Audio influence</span><b>${Math.round(S.audioWeight*100)}%</b></div>
       <input type="range" min="0" max="1" step="0.01" value="${S.audioWeight}" oninput="S.audioWeight=+this.value;render()">
       <div class="row"><span>Style influence</span><b>${Math.round(S.styleWeight*100)}%</b></div>
@@ -189,16 +189,15 @@ function coverKnobs(){
 }
 function cover(){
   return `<h1 class="h-title">${tr("tab_cover")}</h1>
-    <p class="muted">Upload the original. We send it as a Suno cover (upload_url + audio_weight), not a new song from a text prompt.</p>
-    <div class="inputbox" style="margin:12px 0"><input type="text" placeholder="Optional style notes (e.g. same song, warmer vocal)" value="${esc(S.prompt)}" oninput="S.prompt=this.value"></div>
+    <p class="muted">Like Suno: the model hears the reference and sings those lyrics in the original language. Paste only if you want to override.</p>
+    <div class="inputbox" style="margin:12px 0"><input type="text" placeholder="Optional style only (e.g. warmer vocal, same arrangement)" value="${esc(S.prompt)}" oninput="S.prompt=this.value"></div>
     <label class="upload">${(S.audioB64||S.audioUrl)?tr("clip_ready"):tr("upload_audio")}
       <input type="file" accept="audio/*,video/mp4,video/quicktime,.mp4,.m4a,.wav,.mp3" class="hidden" onchange="onAudio(this)"></label>
-    <div class="card" style="margin:12px 0">
-      <div style="display:flex;justify-content:space-between"><b>Testo originale (italiano)</b>
-        <button class="ghost" onclick="writeCoverLyrics()">${S.writing?tr("writing"):"✨ "+tr("write_for_me")}</button></div>
-      <p class="muted" style="margin:6px 0 8px">Suno copies melody from the audio. Lyrics only stay Italian if we send the words. Paste them here.</p>
-      <textarea placeholder="Incolla il testo italiano originale…" oninput="S.lyrics=this.value">${esc(S.lyrics)}</textarea>
-    </div>
+    <details class="card" style="margin:12px 0">
+      <summary style="cursor:pointer;font-weight:800">Override lyrics (optional)</summary>
+      <p class="muted" style="margin:8px 0">Leave empty so the cover sings what it hears. Paste only to force different words.</p>
+      <textarea placeholder="Optional override…" oninput="S.lyrics=this.value">${esc(S.lyrics)}</textarea>
+    </details>
     ${coverKnobs()}
     <button class="btn gold" style="width:100%;margin-top:12px" onclick="mintCover()">◆ ${tr("tab_cover")} · 1 ●</button>`;
 }
@@ -500,8 +499,7 @@ window.writeCoverLyrics=async()=>{
   S.writing=false; render();
 };
 window.mintCover=()=>{
-  if(!(S.audioB64||S.audioUrl)){ toast("Carica prima il brano originale"); return; }
-  if(!(S.lyrics||"").trim()) toast("Senza testo incollato, Suno inventa parole. Meglio incollare l'italiano originale.");
+  if(!(S.audioB64||S.audioUrl)){ toast("Upload the original first"); return; }
   mint();
 };
 window.mint=async()=>{
@@ -514,23 +512,18 @@ window.mint=async()=>{
     await signInAnon();
     if(!S.accessToken) throw new Error("Sign-in failed");
     const idea=(S.prompt||"").trim();
-    const coverLang=(typeof LANG!=="undefined" && LANG==="it") || true;
     const body={
       prompt:isCover
-        ? ((coverLang
-            ? "Canta SOLO in italiano. Stesse parole originali del file. Non tradurre in inglese. "
-            : "Keep original lyrics and language. Do not translate. ")+idea)
+        ? (idea || "Cover the uploaded reference. Sing the lyrics heard in the audio, in that language.")
         : (idea||(m+" "+g+" song")),
       style:g, mood:m, tempo:S.tempo, voice:S.voice, title,
       instrumental:S.instrumental, kind:isCover?"cover":"song",
       custom_mode:true,
-      language:isCover?"Italian":"",
-      lang:isCover?"it":"",
       audioWeight:S.audioWeight, styleWeight:S.styleWeight, weirdness:S.weirdness,
       audio_weight:S.audioWeight, style_weight:S.styleWeight, weirdness_constraint:S.weirdness,
     };
-    if(isCover) body.negative_tags="english, american, british, translated lyrics";
-    if(!S.instrumental&&S.lyrics) body.lyrics=S.lyrics;
+    if(isCover && (S.lyrics||"").trim()) body.lyrics=S.lyrics.trim();
+    else if(!isCover && !S.instrumental && S.lyrics) body.lyrics=S.lyrics;
     if(S.audioUrl){ body.audioUrl=S.audioUrl; body.upload_url=S.audioUrl; }
     else if(S.audioB64) body.audioBase64=S.audioB64;
     if(isCover && !body.audioBase64 && !body.audioUrl) throw new Error("Cover needs the uploaded audio");

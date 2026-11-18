@@ -23,7 +23,7 @@ const S = {
   prompt: "", title: "", lyrics: "", writing: false, instrumental: false,
   genre: "", mood: "", voice: "", tempo: "",
   audioWeight: 0.9, styleWeight: 0.55, weirdness: 0.08,
-  audioB64: null, audioUrl: null, photoURL: null,
+  audioB64: null, audioUrl: null, photoURL: null, sourceDuration: 0,
   coins: 3, isPro: localStorage.getItem("is_pro") === "true",
   userId: localStorage.getItem("sb_user_id"),
   accessToken: localStorage.getItem("sb_access_token"),
@@ -446,20 +446,21 @@ window.onAudio=async(inp)=>{
     const ctx=new (window.AudioContext||window.webkitAudioContext)();
     decoded=await ctx.decodeAudioData(buf.slice(0));
     await ctx.close();
-    const compact=encodeWavMono(decoded, 120, 16000);
+    S.sourceDuration=decoded.duration||0;
+    const full=encodeWavMono(decoded, Math.min(240, Math.ceil(S.sourceDuration)+1), 16000);
     let uploaded=false;
     if(!isVideo && f.size<=12*1024*1024){
       try{
         S.audioUrl=await uploadCoverBytes(new Uint8Array(buf), meta.mime, meta.ext);
         uploaded=true;
-        toast(tr("clip_ready")+" · original uploaded");
+        toast(tr("clip_ready")+" · "+Math.round(S.sourceDuration)+"s original");
       }catch(e){ if(String(e.message)==="NO_BUCKET") throw e; }
     }
     if(!uploaded){
-      S.audioUrl=await uploadCoverBytes(compact, "audio/wav", "wav");
-      toast(tr("clip_ready")+" · 2 min audio uploaded");
+      S.audioUrl=await uploadCoverBytes(full, "audio/wav", "wav");
+      toast(tr("clip_ready")+" · "+Math.min(240, Math.round(S.sourceDuration))+"s audio");
     }
-    S.audioB64=wavToB64(encodeWavMono(decoded, 60, 16000));
+    S.audioB64=null;
   }catch(e){
     const msg=String(e.message||e);
     if(decoded){
@@ -531,7 +532,7 @@ window.mint=async()=>{
     if(isCover) body.negative_tags="english, american, british, translated lyrics";
     if(!S.instrumental&&S.lyrics) body.lyrics=S.lyrics;
     if(S.audioUrl){ body.audioUrl=S.audioUrl; body.upload_url=S.audioUrl; }
-    if(S.audioB64) body.audioBase64=S.audioB64;
+    else if(S.audioB64) body.audioBase64=S.audioB64;
     if(isCover && !body.audioBase64 && !body.audioUrl) throw new Error("Cover needs the uploaded audio");
     const start=await api("/functions/v1/mint",{method:"POST",body});
     if(start.obj.paywall){ S.generating=false; S.screen="paywall"; render(); return; }
@@ -546,9 +547,12 @@ window.mint=async()=>{
         take:i===0?"A":"B",
       });
     });
-    saveLib(); S.current=S.library[0]; S.audioB64=null; S.audioUrl=null;
+    saveLib(); S.current=S.library[0];
+    const longCover=isCover && S.sourceDuration>150;
+    S.audioB64=null; S.audioUrl=null;
     await refreshCredits();
     S.generating=false; S.progress=100; S.showPlayer=true; playAudio(S.current); render();
+    if(longCover) toast("If this take is short, use Extend on the player for the rest (1 credit).");
   }catch(e){ S.generating=false; toast(e.message||String(e)); render(); }
 };
 

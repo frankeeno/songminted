@@ -55,9 +55,15 @@ async function api(path,{method="GET",body,query}={}){
   let url=CFG.supabaseURL+path;
   if(query) url+=(url.includes("?")?"&":"?")+new URLSearchParams(query);
   const headers={apikey:CFG.supabaseAnonKey,Authorization:"Bearer "+(S.accessToken||CFG.supabaseAnonKey),"Content-Type":"application/json"};
-  const res=await fetch(url,{method,headers,body:body?JSON.stringify(body):undefined});
+  let res;
+  try{
+    res=await fetch(url,{method,headers,body:body?JSON.stringify(body):undefined});
+  }catch(e){
+    throw new Error("Network failed. If this was a Cover, the clip was probably too large. Use a short mp3/m4a.");
+  }
   const text=await res.text();
-  let obj={}; try{ obj=text?JSON.parse(text):{}; }catch{ obj={error:text}; }
+  let obj={}; try{ obj=text?JSON.parse(text):{}; }catch{ obj={error:text||res.statusText}; }
+  if(res.status===413) obj.error=obj.error||"Clip too large for Cover. Use under 45 seconds.";
   return {ok:res.ok,status:res.status,obj};
 }
 function storeAuth(obj){
@@ -145,7 +151,7 @@ function studio(){
       <textarea placeholder="${esc(tr("lyrics_ph"))}" oninput="S.lyrics=this.value">${esc(S.lyrics)}</textarea>
     </div>`:""}
     <label class="upload" style="margin:12px 0;display:block">${S.audioB64?tr("clip_ready"):tr("upload_audio")}
-      <input type="file" accept="audio/*" class="hidden" onchange="onAudio(this)"></label>
+      <input type="file" accept="audio/*,video/mp4,video/quicktime,.mp4,.m4a,.wav,.mp3" class="hidden" onchange="onAudio(this)"></label>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0">
       <span>${tr("instrumental")}</span>
       <input type="checkbox" ${S.instrumental?"checked":""} onchange="S.instrumental=this.checked;render()">
@@ -172,7 +178,7 @@ function cover(){
     <p class="muted">${esc(tr("ob3_sub"))}</p>
     <div class="inputbox" style="margin:12px 0"><input type="text" placeholder="${esc(tr("prompt_ph_simple").split("\\n")[0])}" value="${esc(S.prompt)}" oninput="S.prompt=this.value"></div>
     <label class="upload">${S.audioB64?tr("clip_ready"):tr("upload_audio")}
-      <input type="file" accept="audio/*" class="hidden" onchange="onAudio(this)"></label>
+      <input type="file" accept="audio/*,video/mp4,video/quicktime,.mp4,.m4a,.wav,.mp3" class="hidden" onchange="onAudio(this)"></label>
     <div class="optgrid" style="margin:16px 0">
       ${voices.map(([e,n])=>`<div class="opt ${S.voice===n?"set":""}" onclick="S.voice='${n}';render()">${e}<div class="val">${n}</div></div>`).join("")}
     </div>
@@ -358,7 +364,46 @@ window.togglePlay=()=>{ const a=document.getElementById("audioEl"); if(!a) retur
 window.skip=(s)=>{ const a=document.getElementById("audioEl"); if(a) a.currentTime=Math.max(0,a.currentTime+s); };
 window.seek=(e)=>{ const a=document.getElementById("audioEl"); const b=e.currentTarget.getBoundingClientRect(); if(a&&a.duration) a.currentTime=((e.clientX-b.left)/b.width)*a.duration; };
 
-window.onAudio=(inp)=>{ const f=inp.files&&inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ S.audioB64=String(r.result).split(",")[1]; toast(tr("clip_ready")); render(); }; r.readAsDataURL(f); };
+function encodeWavMono(buffer, maxSec=45, sampleRate=16000){
+  const src=buffer.numberOfChannels>1?(()=>{const L=buffer.getChannelData(0),R=buffer.getChannelData(1),m=new Float32Array(L.length); for(let i=0;i<L.length;i++) m[i]=(L[i]+R[i])/2; return m;})():buffer.getChannelData(0);
+  const take=Math.min(src.length, Math.floor(buffer.sampleRate*maxSec));
+  const outLen=Math.floor(take*sampleRate/buffer.sampleRate);
+  const pcm=new Int16Array(outLen);
+  for(let i=0;i<outLen;i++){
+    const x=src[Math.min(take-1, Math.floor(i*buffer.sampleRate/sampleRate))];
+    const s=Math.max(-1,Math.min(1,x));
+    pcm[i]=s<0?s*0x8000:s*0x7fff;
+  }
+  const bytes=pcm.byteLength;
+  const wav=new ArrayBuffer(44+bytes);
+  const v=new DataView(wav);
+  const w=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  w(0,"RIFF"); v.setUint32(4,36+bytes,true); w(8,"WAVE"); w(12,"fmt "); v.setUint32(16,16,true);
+  v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,sampleRate,true);
+  v.setUint32(28,sampleRate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+  w(36,"data"); v.setUint32(40,bytes,true);
+  new Uint8Array(wav,44).set(new Uint8Array(pcm.buffer));
+  let bin=""; const u8=new Uint8Array(wav);
+  for(let i=0;i<u8.length;i+=0x8000) bin+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));
+  return btoa(bin);
+}
+window.onAudio=async(inp)=>{
+  const f=inp.files&&inp.files[0]; if(!f) return;
+  toast("Reading clip…");
+  try{
+    const buf=await f.arrayBuffer();
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const decoded=await ctx.decodeAudioData(buf.slice(0));
+    await ctx.close();
+    S.audioB64=encodeWavMono(decoded);
+    toast(tr("clip_ready")+" (45s max, audio only)");
+    render();
+  }catch(e){
+    S.audioB64=null;
+    toast("Couldn't read audio from that file. Export mp3 or m4a, or a short clip.");
+    render();
+  }
+};
 window.onPhoto=(inp)=>{ const f=inp.files&&inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ S.photoURL=r.result; toast(tr("change_photo")); render(); }; r.readAsDataURL(f); };
 
 window.writeLyrics=async()=>{
@@ -386,11 +431,11 @@ window.mint=async()=>{
       instrumental:S.instrumental, kind:S.audioB64?"cover":"song",
       audioWeight:S.audioWeight, styleWeight:S.styleWeight, weirdness:S.weirdness,
     };
-    if(S.mode==="Custom"&&!S.instrumental&&S.lyrics) body.lyrics=S.lyrics;
+    if(!S.instrumental&&S.lyrics) body.lyrics=S.lyrics;
     if(S.audioB64) body.audioBase64=S.audioB64;
     const start=await api("/functions/v1/mint",{method:"POST",body});
     if(start.obj.paywall){ S.generating=false; S.screen="paywall"; render(); return; }
-    const jobId=start.obj.jobId; if(!jobId) throw new Error(start.obj.error||start.obj.detail||"mint failed");
+    const jobId=start.obj.jobId; if(!jobId) throw new Error(start.obj.error||start.obj.detail||start.obj.message||("mint failed ("+start.status+")"));
     const results=await pollJob(jobId);
     results.forEach((v,i)=>{
       S.library.unshift({

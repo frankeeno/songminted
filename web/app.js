@@ -193,6 +193,12 @@ function cover(){
     <div class="inputbox" style="margin:12px 0"><input type="text" placeholder="Optional style notes (e.g. same song, warmer vocal)" value="${esc(S.prompt)}" oninput="S.prompt=this.value"></div>
     <label class="upload">${(S.audioB64||S.audioUrl)?tr("clip_ready"):tr("upload_audio")}
       <input type="file" accept="audio/*,video/mp4,video/quicktime,.mp4,.m4a,.wav,.mp3" class="hidden" onchange="onAudio(this)"></label>
+    <div class="card" style="margin:12px 0">
+      <div style="display:flex;justify-content:space-between"><b>Testo originale (italiano)</b>
+        <button class="ghost" onclick="writeCoverLyrics()">${S.writing?tr("writing"):"✨ "+tr("write_for_me")}</button></div>
+      <p class="muted" style="margin:6px 0 8px">Suno copies melody from the audio. Lyrics only stay Italian if we send the words. Paste them here.</p>
+      <textarea placeholder="Incolla il testo italiano originale…" oninput="S.lyrics=this.value">${esc(S.lyrics)}</textarea>
+    </div>
     ${coverKnobs()}
     <button class="btn gold" style="width:100%;margin-top:12px" onclick="mintCover()">◆ ${tr("tab_cover")} · 1 ●</button>`;
 }
@@ -481,8 +487,20 @@ window.writeLyrics=async()=>{
   S.writing=false; render();
 };
 
+window.writeCoverLyrics=async()=>{
+  if(S.writing) return; S.writing=true; render();
+  try{
+    await signInAnon();
+    const idea="Trascrivi in ITALIANO le parole originali del brano. Non tradurre in inglese. Testo fedele.";
+    const r=await api("/functions/v1/mint",{method:"POST",body:{action:"lyrics",prompt:idea,language:"Italian"}});
+    if(r.obj.lyrics){ S.lyrics=r.obj.lyrics; if(!S.title&&r.obj.title) S.title=r.obj.title; toast("Testo (da rivedere)"); }
+    else toast(r.obj.error||"lyrics failed");
+  }catch(e){ toast(e.message); }
+  S.writing=false; render();
+};
 window.mintCover=()=>{
-  if(!(S.audioB64||S.audioUrl)){ toast("Upload the original song first"); return; }
+  if(!(S.audioB64||S.audioUrl)){ toast("Carica prima il brano originale"); return; }
+  if(!(S.lyrics||"").trim()) toast("Senza testo incollato, Suno inventa parole. Meglio incollare l'italiano originale.");
   mint();
 };
 window.mint=async()=>{
@@ -495,16 +513,22 @@ window.mint=async()=>{
     await signInAnon();
     if(!S.accessToken) throw new Error("Sign-in failed");
     const idea=(S.prompt||"").trim();
+    const coverLang=(typeof LANG!=="undefined" && LANG==="it") || true;
     const body={
       prompt:isCover
-        ? (idea||"Keep this song: same melody, harmony, vocals and lyrics")
+        ? ((coverLang
+            ? "Canta SOLO in italiano. Stesse parole originali del file. Non tradurre in inglese. "
+            : "Keep original lyrics and language. Do not translate. ")+idea)
         : (idea||(m+" "+g+" song")),
       style:g, mood:m, tempo:S.tempo, voice:S.voice, title,
       instrumental:S.instrumental, kind:isCover?"cover":"song",
       custom_mode:true,
+      language:isCover?"Italian":"",
+      lang:isCover?"it":"",
       audioWeight:S.audioWeight, styleWeight:S.styleWeight, weirdness:S.weirdness,
       audio_weight:S.audioWeight, style_weight:S.styleWeight, weirdness_constraint:S.weirdness,
     };
+    if(isCover) body.negative_tags="english, american, british, translated lyrics";
     if(!S.instrumental&&S.lyrics) body.lyrics=S.lyrics;
     if(S.audioUrl){ body.audioUrl=S.audioUrl; body.upload_url=S.audioUrl; }
     if(S.audioB64) body.audioBase64=S.audioB64;

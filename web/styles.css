@@ -121,3 +121,7 @@ select.locale{background:#131a22;color:#f2f6f8;border:1px solid #212c38;border-r
 .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px}
 .actions .a{background:var(--panel2);border:1px solid var(--stroke);border-radius:30px;padding:12px 18px;font-weight:700;cursor:pointer}
 .stemlist a{display:block;padding:12px;border:1px solid var(--stroke);border-radius:14px;margin:8px 0;color:#fff;text-decoration:none}
+.takes{display:flex;gap:8px;margin:10px 0}
+.takes button{background:var(--panel2);border:1.5px solid var(--stroke);color:#fff;border-radius:999px;padding:8px 14px;font-weight:800;cursor:pointer}
+.takes button.on{border-color:var(--emerald);background:rgba(52,211,153,.12)}
+.lyrics{white-space:pre-wrap;width:min(480px,92vw);background:var(--panel);border:1px solid var(--stroke);border-radius:16px;padding:16px;color:#e8eef2;font:15px/1.5 var(--font-sans)}

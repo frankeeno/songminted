@@ -36,6 +36,7 @@ const S = {
   current: null, showPlayer: false, generating: false, progress: 0, genLbl: "",
   sheet: null, tmpPick: {}, settings: false, extendOpen: false, extendPrompt: "",
   stemsOpen: false, stems: [], stemsStatus: "",
+  lyricsOpen: false, vibePrompt: "", takeGroup: null,
 };
 
 function saveLib(){ localStorage.setItem("library_v1", JSON.stringify(S.library)); }
@@ -138,7 +139,7 @@ function studio(){
     <input type="text" class="card" style="margin:12px 0" placeholder="${esc(tr("your_song"))}" value="${esc(S.title)}" oninput="S.title=this.value">
     ${S.mode==="Photo"?`<label class="upload">${S.photoURL?"✓ "+tr("change_photo"):tr("choose_photo")}
       <input type="file" accept="image/*" class="hidden" onchange="onPhoto(this)"></label>`:""}
-    ${S.mode==="Custom"&&!S.instrumental?`<div class="card" style="margin:12px 0">
+    ${!S.instrumental?`<div class="card" style="margin:12px 0">
       <div style="display:flex;justify-content:space-between"><b>${tr("lyrics_caps")}</b>
         <button class="ghost" onclick="writeLyrics()">${S.writing?tr("writing"):"✨ "+tr("write_for_me")}</button></div>
       <textarea placeholder="${esc(tr("lyrics_ph"))}" oninput="S.lyrics=this.value">${esc(S.lyrics)}</textarea>
@@ -262,13 +263,19 @@ function sheets(){
     </div></div>`;
 }
 
+function siblingTakes(){
+  if(!S.current||!S.current.jobId) return [];
+  return S.library.filter(x=>x.jobId===S.current.jobId);
+}
 function playerFull(){
   const s=S.current; if(!S.showPlayer||!s) return "";
+  const takes=siblingTakes();
   return `<div class="player-full">
     <div style="width:100%;display:flex;justify-content:space-between"><button class="ghost" onclick="S.showPlayer=false;render()">‹</button></div>
     <div class="pl-art" style="${s.img||s.imageURL?`background-image:url('${s.img||s.imageURL}')`:"background:var(--grad)"}"></div>
     <h2 style="font-size:28px;font-weight:800">${esc(s.title)}</h2>
     <p style="color:var(--muted)">${esc(s.meta||"")}</p>
+    ${takes.length>1?`<div class="takes">${takes.map((tk,i)=>`<button class="${tk.id===s.id?"on":""}" onclick="pickTake('${tk.id}')">${takes.length===2?(i?"Take B":"Take A"):"Take "+(i+1)}</button>`).join("")}</div>`:""}
     <div class="pl-bar" onclick="seek(event)"><div class="fill" id="plFill" style="width:0"></div></div>
     <div style="display:flex;gap:28px;align-items:center;margin:22px 0">
       <button class="ghost" onclick="skip(-15)">-15</button>
@@ -281,9 +288,18 @@ function playerFull(){
       <div class="a" onclick="S.extendOpen=true;render()">${tr("extend")}</div>
       <div class="a" onclick="S.stemsOpen=true;render()">${tr("stems")}</div>
       <div class="a" onclick="startVideo()">${tr("music_video")}</div>
+      <div class="a" onclick="S.lyricsOpen=!S.lyricsOpen;render()">Lyrics</div>
+      <div class="a" onclick="shareSong()">Share</div>
+    </div>
+    ${S.lyricsOpen&&s.lyrics?`<pre class="lyrics">${esc(s.lyrics)}</pre>`:S.lyricsOpen?`<p class="muted">No lyrics on this take.</p>`:""}
+    <div class="card" style="width:min(480px,92vw);margin-top:16px">
+      <b>Vibe iterate</b>
+      <p class="muted">Like Mozart chat: describe the change, we mint a new take (1 credit).</p>
+      <textarea oninput="S.vibePrompt=this.value" placeholder="Make the chorus bigger, more 808s, keep the melody">${esc(S.vibePrompt)}</textarea>
+      <button class="btn ghost" style="width:100%;margin-top:10px" onclick="vibeIterate()">Iterate · 1 ◆</button>
     </div>
     ${S.extendOpen?`<div class="card" style="width:min(480px,92vw);margin-top:16px">
-      <b>${tr("extend_song")}</b><p>${tr("extend_sub")}</p>
+      <b>${tr("extend_song")}</b><p>${tr("extend_sub")} Continues from the playhead, like Udio Extend.</p>
       <textarea oninput="S.extendPrompt=this.value" placeholder="${esc(tr("where_next_ph"))}">${esc(S.extendPrompt)}</textarea>
       <button class="btn" style="width:100%;margin-top:10px" onclick="extendSong()">${tr("extend")}</button>
     </div>`:""}
@@ -381,7 +397,8 @@ window.mint=async()=>{
         id:uid(), title:v.title||title, meta:g+" · "+m,
         badge:S.audioB64?"◆ Cover":"◆ Minted",
         audioURL:v.audioURL, img:S.photoURL||v.imageURL, imageURL:S.photoURL||v.imageURL,
-        providerAudioId:v.audioId, jobId, liked:false,
+        providerAudioId:v.audioId, jobId, liked:false, lyrics:S.lyrics||"",
+        take:i===0?"A":"B",
       });
     });
     saveLib(); S.current=S.library[0]; S.audioB64=null;
@@ -405,7 +422,9 @@ window.extendSong=async()=>{
   S.generating=true; S.progress=5; S.showPlayer=false; S.extendOpen=false; render();
   try{
     await signInAnon();
-    const start=await api("/functions/v1/extend",{method:"POST",body:{audioId:s.providerAudioId,title:s.title,prompt:S.extendPrompt||""}});
+    const ael=document.getElementById("audioEl");
+    const continueAt=ael&&ael.currentTime?Math.floor(ael.currentTime):undefined;
+    const start=await api("/functions/v1/extend",{method:"POST",body:{audioId:s.providerAudioId,title:s.title,prompt:S.extendPrompt||"",continueAt}});
     if(!start.obj.jobId) throw new Error(start.obj.error||"extend failed");
     const results=await pollJob(start.obj.jobId);
     results.forEach(v=>S.library.unshift({id:uid(),title:(v.title||s.title)+" (Extended)",meta:s.meta,badge:"◆ Extended",audioURL:v.audioURL,img:v.imageURL||s.img,providerAudioId:v.audioId,jobId:start.obj.jobId}));
@@ -434,6 +453,24 @@ window.startVideo=async()=>{
     if(r.status===404||r.obj.code==="NOT_FOUND"){ toast(tr("video_soon")); return; }
     toast(r.obj.error||r.obj.jobId||tr("video_soon"));
   }catch(e){ toast(tr("video_soon")); }
+};
+
+window.pickTake=(id)=>{ const s=S.library.find(x=>x.id===id); if(!s) return; S.current=s; S.showPlayer=true; playAudio(s); render(); };
+window.shareSong=async()=>{
+  const s=S.current; if(!s||!s.audioURL) return;
+  try{
+    if(navigator.share) await navigator.share({title:s.title,url:s.audioURL});
+    else { await navigator.clipboard.writeText(s.audioURL); toast("Link copied"); }
+  }catch(e){ toast("Share cancelled"); }
+};
+window.vibeIterate=async()=>{
+  const note=(S.vibePrompt||"").trim();
+  if(!note){ toast("Describe the change"); return; }
+  const s=S.current;
+  S.prompt=(s&&s.title?s.title+". ":"")+note;
+  S.mode="Custom";
+  S.showPlayer=false;
+  await mint();
 };
 window.resetAccount=()=>{
   ["sb_access_token","sb_refresh_token","sb_user_id","library_v1","is_pro"].forEach(k=>localStorage.removeItem(k));

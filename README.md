@@ -84,4 +84,24 @@ This GitHub repo is the source of truth. Pull on the Mac after changes.
 
 **Android:** not in this repo yet.
 
+## vs Suno, Udio, Mozart AI
+
+We match the *song factory* loop they all share: prompt → two takes → lyrics → cover from audio → extend → stems → publish.
+
+Shipped this pass:
+- Take A / Take B after a mint (Suno)
+- Extend from the playhead (Udio)
+- Vibe iterate on the player (Mozart chat edits, still a full remint, 1 credit)
+- Lyrics on the player, share link
+
+We are **not** them yet:
+- No section inpaint / replace-bar (Udio)
+- No DAW, MIDI, VST, or 6-stem mixer (Mozart Studio)
+- No custom voice personas / trained models
+- No licensed commercial rights story, no Stripe
+- Cinematic video endpoint not deployed
+- No Android app
+
+Audio quality is the EvoLink/Suno-class model behind `/mint`. UI cannot fake a better model.
+
 > Security: service-role and Suno/EvoLink keys stay on the backend, never in the app or `web/`.

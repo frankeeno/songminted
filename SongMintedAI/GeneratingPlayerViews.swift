@@ -80,6 +80,24 @@ struct PlayerView: View {
                 Text(app.currentSong?.title ?? tr("your_song")).font(.system(size: 26, weight: .bold))
                 Text(app.currentSong?.meta ?? "").foregroundColor(Brand.muted)
 
+                if takes.count > 1 {
+                    HStack(spacing: 8) {
+                        ForEach(Array(takes.enumerated()), id: \.element.id) { i, song in
+                            Button {
+                                app.currentSong = song
+                                pm.load(song, restart: true)
+                            } label: {
+                                Text(takes.count == 2 ? (i == 0 ? "Take A" : "Take B") : "Take \(i + 1)")
+                                    .font(.system(size: 13, weight: .heavy))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 14).padding(.vertical, 8)
+                                    .background(Capsule().fill(Brand.panel2))
+                                    .overlay(Capsule().stroke(song.id == app.currentSong?.id ? Brand.emerald : Brand.stroke, lineWidth: 1.5))
+                            }
+                        }
+                    }
+                }
+
                 // Scrubber — drag to any point in the song.
                 VStack(spacing: 4) {
                     Slider(value: Binding(get: { isScrubbing ? scrubTime : pm.currentTime },
@@ -155,6 +173,11 @@ struct PlayerView: View {
         .sheet(item: $shareItem) { ShareSheet(url: $0.url) }
         .sheet(isPresented: $showStems) { StemsView().environmentObject(app) }
         .sheet(isPresented: $showExtend) { ExtendSheet(duration: pm.duration).environmentObject(app) }
+    }
+
+    private var takes: [Song] {
+        guard let job = app.currentSong?.jobId, !job.isEmpty else { return [] }
+        return app.library.filter { $0.jobId == job }
     }
 
     private func timeString(_ s: Double) -> String {

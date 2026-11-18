@@ -69,20 +69,19 @@ A Song Minted app icon (emerald gem + gold note) is included at
 project manually, drag `Assets.xcassets` into the project) and rebuild — the icon
 will then show on the simulator/home screen.
 
-## Current status
+## Layout
 
-- **Working now:** full UI, navigation, and a *mocked* generation that produces a
-  song card and opens the player.
-- **Not yet wired:** real audio. Song generation is simulated (progress animation only).
+- `SongMintedAI/` — iOS SwiftUI app (Xcode).
+- `web/` — browser client (same Liquid Glass UI). Talks to Supabase with the **anon** key only.
 
-## Next step — make it produce real songs
+This GitHub repo is the source of truth. Pull on the Mac after changes.
 
-Follow the **AI Services spec** in the project folder:
+## Current status (18 Nov 2026)
 
-1. Stand up a backend (Supabase/Firebase) with `/mint` and `/job` endpoints.
-2. Implement `BackendSongService` (stub in `SongService.swift`) to call your backend,
-   which proxies to **EvoLink** (fast MVP) or **Mureka/ElevenLabs** (licensed).
-3. Swap the mock loop in `AppState.mintSong()` for a `BackendSongService` call.
-4. Add **RevenueCat** for the App Store subscription and map credits.
+**iOS (`Config.swift`):** `useRealBackend`, `stemsEnabled`, `cinematicVideoEnabled` are all true. Mint goes through Supabase. Paywall is still not Stripe/RevenueCat.
 
-> Security: API keys live **only** on the backend, never in this app.
+**Web (`web/`):** mint, lyrics, credits, extend, stems, download, publish are wired. Paywall is local Pro only (no Stripe). `/video` is not deployed, so cinematic video is blocked on web.
+
+**Android:** not in this repo yet.
+
+> Security: service-role and Suno/EvoLink keys stay on the backend, never in the app or `web/`.

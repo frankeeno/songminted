@@ -1,0 +1,26 @@
+:root, :root.dark, :root.light {
+  --bg: #05070a;
+  --panel: #0d1117;
+  --panel2: #131a22;
+  --panel3: #1a232e;
+  --stroke: #212c38;
+  --txt: #f2f6f8;
+  --muted: #7d8c99;
+  --emerald: #34d399;
+  --teal: #12b3a6;
+  --gold: #f5c451;
+  --background: #05070a;
+  --foreground: #f2f6f8;
+  --muted-foreground: #7d8c99;
+  --card: #0d1117;
+  --border: #212c38;
+  --primary: #34d399;
+  --primary-foreground: #04231d;
+  --accent: #f5c451;
+  --accent-foreground: #241a05;
+  --radius: 16px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Inter, Roboto, sans-serif;
+  --grad: linear-gradient(135deg, #3ee0a6, #0ea5a4);
+  --grad-gold: linear-gradient(135deg, #f9dd8a, #e0a83a);
+}
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--txt); font-family: var(--font-sans); }

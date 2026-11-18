@@ -22,7 +22,7 @@ const S = {
   ob: 0, tab: "studio", mode: "Simple", plan: 1,
   prompt: "", title: "", lyrics: "", writing: false, instrumental: false,
   genre: "", mood: "", voice: "", tempo: "",
-  audioWeight: 0.7, styleWeight: 0.6, weirdness: 0.3,
+  audioWeight: 0.9, styleWeight: 0.55, weirdness: 0.08,
   audioB64: null, audioUrl: null, photoURL: null,
   coins: 3, isPro: localStorage.getItem("is_pro") === "true",
   userId: localStorage.getItem("sb_user_id"),
@@ -172,27 +172,29 @@ function studio(){
       <div class="opt ${S.mood?"set":""}" onclick="S.sheet='mood';render()"><div>🎭</div><div class="nm">${tr("lbl_mood")}</div><div class="val">${esc(S.mood)}</div></div>
       <div class="opt ${S.tempo?"set":""}" onclick="cycleTempo()"><div>⏱</div><div class="nm">${tr("lbl_tempo")}</div><div class="val">${esc(S.tempo)}</div></div>
     </div>
-    <div class="fine card" style="margin:16px 0">
-      <div class="row"><span>${tr("faithful_audio")}</span><b>${Math.round(S.audioWeight*100)}%</b></div>
-      <input type="range" min="0" max="1" step="0.01" value="${S.audioWeight}" oninput="S.audioWeight=+this.value;render()">
-      <div class="row"><span>${tr("faithful_style")}</span><b>${Math.round(S.styleWeight*100)}%</b></div>
-      <input type="range" min="0" max="1" step="0.01" value="${S.styleWeight}" oninput="S.styleWeight=+this.value;render()">
-      <div class="row"><span>${tr("weirdness")}</span><b>${Math.round(S.weirdness*100)}%</b></div>
-      <input type="range" min="0" max="1" step="0.01" value="${S.weirdness}" oninput="S.weirdness=+this.value;render()">
-    </div>
-    <button class="btn" style="width:100%" onclick="mint()">${S.audioB64?"◆ "+tr("tab_cover"):"◆ "+tr("mint_song")} · 1 ●</button>`;
+    ${coverKnobs()}
+    <button class="btn" style="width:100%" onclick="mint()">${(S.audioB64||S.audioUrl)?"◆ "+tr("tab_cover"):"◆ "+tr("mint_song")} · 1 ●</button>`;
 }
 
+function coverKnobs(){
+  return `<div class="fine card" style="margin:16px 0">
+      <p class="muted" style="margin:0 0 10px">Suno-style cover. High audio = keep melody, vocals, lyrics. Low weirdness = stay faithful.</p>
+      <div class="row"><span>Audio influence</span><b>${Math.round(S.audioWeight*100)}%</b></div>
+      <input type="range" min="0" max="1" step="0.01" value="${S.audioWeight}" oninput="S.audioWeight=+this.value;render()">
+      <div class="row"><span>Style influence</span><b>${Math.round(S.styleWeight*100)}%</b></div>
+      <input type="range" min="0" max="1" step="0.01" value="${S.styleWeight}" oninput="S.styleWeight=+this.value;render()">
+      <div class="row"><span>Weirdness</span><b>${Math.round(S.weirdness*100)}%</b></div>
+      <input type="range" min="0" max="1" step="0.01" value="${S.weirdness}" oninput="S.weirdness=+this.value;render()">
+    </div>`;
+}
 function cover(){
   return `<h1 class="h-title">${tr("tab_cover")}</h1>
-    <p class="muted">${esc(tr("ob3_sub"))}</p>
-    <div class="inputbox" style="margin:12px 0"><input type="text" placeholder="${esc(tr("prompt_ph_simple").split("\\n")[0])}" value="${esc(S.prompt)}" oninput="S.prompt=this.value"></div>
+    <p class="muted">Upload the original. We send it as a Suno cover (upload_url + audio_weight), not a new song from a text prompt.</p>
+    <div class="inputbox" style="margin:12px 0"><input type="text" placeholder="Optional style notes (e.g. same song, warmer vocal)" value="${esc(S.prompt)}" oninput="S.prompt=this.value"></div>
     <label class="upload">${(S.audioB64||S.audioUrl)?tr("clip_ready"):tr("upload_audio")}
       <input type="file" accept="audio/*,video/mp4,video/quicktime,.mp4,.m4a,.wav,.mp3" class="hidden" onchange="onAudio(this)"></label>
-    <div class="optgrid" style="margin:16px 0">
-      ${voices.map(([e,n])=>`<div class="opt ${S.voice===n?"set":""}" onclick="S.voice='${n}';render()">${e}<div class="val">${n}</div></div>`).join("")}
-    </div>
-    <button class="btn gold" style="width:100%;margin-top:12px" onclick="mint()">◆ ${tr("tab_cover")}</button>`;
+    ${coverKnobs()}
+    <button class="btn gold" style="width:100%;margin-top:12px" onclick="mintCover()">◆ ${tr("tab_cover")} · 1 ●</button>`;
 }
 
 function tools(){
@@ -451,7 +453,7 @@ window.onAudio=async(inp)=>{
       S.audioUrl=await uploadCoverBytes(compact, "audio/wav", "wav");
       toast(tr("clip_ready")+" · 2 min audio uploaded");
     }
-    S.audioB64=null;
+    S.audioB64=wavToB64(encodeWavMono(decoded, 60, 16000));
   }catch(e){
     const msg=String(e.message||e);
     if(decoded){
@@ -479,23 +481,34 @@ window.writeLyrics=async()=>{
   S.writing=false; render();
 };
 
+window.mintCover=()=>{
+  if(!(S.audioB64||S.audioUrl)){ toast("Upload the original song first"); return; }
+  mint();
+};
 window.mint=async()=>{
   const g=S.genre||"Pop", m=S.mood||"Happy";
+  const isCover=!!(S.audioB64||S.audioUrl);
+  if(isCover && S.audioWeight<0.5) S.audioWeight=0.85;
   const title=(S.title||"").trim()||(titleA[Math.floor(Math.random()*6)]+" "+titleB[Math.floor(Math.random()*6)]);
-  S.generating=true; S.progress=8; S.genLbl="…"; S.showPlayer=false; render();
+  S.generating=true; S.progress=8; S.genLbl=isCover?"Covering your track…":"…"; S.showPlayer=false; render();
   try{
     await signInAnon();
     if(!S.accessToken) throw new Error("Sign-in failed");
+    const idea=(S.prompt||"").trim();
     const body={
-      prompt:(S.prompt||"").trim()||(m+" "+g+" song"),
+      prompt:isCover
+        ? (idea||"Keep this song: same melody, harmony, vocals and lyrics")
+        : (idea||(m+" "+g+" song")),
       style:g, mood:m, tempo:S.tempo, voice:S.voice, title,
-      instrumental:S.instrumental, kind:(S.audioB64||S.audioUrl)?"cover":"song",
+      instrumental:S.instrumental, kind:isCover?"cover":"song",
+      custom_mode:true,
       audioWeight:S.audioWeight, styleWeight:S.styleWeight, weirdness:S.weirdness,
+      audio_weight:S.audioWeight, style_weight:S.styleWeight, weirdness_constraint:S.weirdness,
     };
     if(!S.instrumental&&S.lyrics) body.lyrics=S.lyrics;
-    if(S.audioUrl) body.audioUrl=S.audioUrl;
-    else if(S.audioB64 && S.audioB64.length<400000) body.audioBase64=S.audioB64;
-    else if(S.audioB64) throw new Error("Cover clip is ready locally but Storage upload failed, so it was not sent. Try mp3/m4a again after a refresh.");
+    if(S.audioUrl){ body.audioUrl=S.audioUrl; body.upload_url=S.audioUrl; }
+    if(S.audioB64) body.audioBase64=S.audioB64;
+    if(isCover && !body.audioBase64 && !body.audioUrl) throw new Error("Cover needs the uploaded audio");
     const start=await api("/functions/v1/mint",{method:"POST",body});
     if(start.obj.paywall){ S.generating=false; S.screen="paywall"; render(); return; }
     const jobId=start.obj.jobId; if(!jobId) throw new Error(start.obj.error||start.obj.detail||start.obj.message||("mint failed ("+start.status+")"));

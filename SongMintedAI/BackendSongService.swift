@@ -46,7 +46,9 @@ struct BackendSongService {
             "prompt": prompt, "style": genre, "mood": mood, "tempo": tempo,
             "voice": voice, "title": title, "instrumental": instrumental,
             "kind": audioBase64 == nil ? "song" : "cover",
-            "audioWeight": audioWeight, "styleWeight": styleWeight, "weirdness": weirdness
+            "custom_mode": true,
+            "audioWeight": audioWeight, "styleWeight": styleWeight, "weirdness": weirdness,
+            "audio_weight": audioWeight, "style_weight": styleWeight, "weirdness_constraint": weirdness
         ]
         if !lyrics.isEmpty { body["lyrics"] = lyrics }
         if let a = audioBase64 { body["audioBase64"] = a }

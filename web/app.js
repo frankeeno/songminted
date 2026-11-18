@@ -51,19 +51,29 @@ function toast(msg){
   clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2000);
 }
 
-async function api(path,{method="GET",body,query}={}){
+async function api(path,{method="GET",body,query,rawB64,contentType,upsert}={}){
+  const payload={path,method,body,query,token:S.accessToken,rawB64,contentType,upsert};
+  try{
+    const res=await fetch("/gumloop/action/sb",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    if(res.status!==404){
+      const wrap=await res.json().catch(()=>({}));
+      if(wrap && typeof wrap.status==="number") return wrap;
+      return {ok:res.ok,status:res.status,obj:wrap};
+    }
+  }catch(e){ /* preview without proxy — fall through */ }
   let url=CFG.supabaseURL+path;
   if(query) url+=(url.includes("?")?"&":"?")+new URLSearchParams(query);
-  const headers={apikey:CFG.supabaseAnonKey,Authorization:"Bearer "+(S.accessToken||CFG.supabaseAnonKey),"Content-Type":"application/json"};
+  const headers={apikey:CFG.supabaseAnonKey,Authorization:"Bearer "+(S.accessToken||CFG.supabaseAnonKey),"Content-Type":contentType||"application/json"};
+  if(upsert) headers["x-upsert"]="true";
   let res;
   try{
-    res=await fetch(url,{method,headers,body:body?JSON.stringify(body):undefined,mode:"cors"});
+    const bin=rawB64?Uint8Array.from(atob(rawB64),c=>c.charCodeAt(0)):undefined;
+    res=await fetch(url,{method,headers,body:bin||(body?JSON.stringify(body):undefined),mode:"cors"});
   }catch(e){
-    throw new Error("Can't reach Supabase ("+(e.message||"blocked")+"). Not a file-size issue at 3MB.");
+    throw new Error("Can't reach Supabase ("+(e.message||"blocked")+"). Open this page from the latest preview link.");
   }
   const text=await res.text();
   let obj={}; try{ obj=text?JSON.parse(text):{}; }catch{ obj={error:text||res.statusText}; }
-  if(res.status===413) obj.error=obj.error||"Clip too large for Cover. Use under 45 seconds.";
   return {ok:res.ok,status:res.status,obj};
 }
 function storeAuth(obj){
@@ -401,24 +411,17 @@ async function uploadCoverBytes(bytes, mime, ext){
   await signInAnon();
   if(!S.userId) throw new Error("Sign-in failed");
   const path=S.userId+"/"+uid()+"."+ext;
-  const put=await fetch(CFG.supabaseURL+"/storage/v1/object/covers/"+path,{
-    method:"POST",
-    headers:{apikey:CFG.supabaseAnonKey,Authorization:"Bearer "+S.accessToken,"Content-Type":mime,"x-upsert":"true"},
-    body:bytes,
-  });
-  const putText=await put.text();
+  const u8=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
+  const put=await api("/storage/v1/object/covers/"+path,{method:"POST",rawB64:wavToB64(u8),contentType:mime,upsert:true});
   if(!put.ok){
-    const low=putText.toLowerCase();
-    if(putText.includes("Bucket not found")||put.status===404) throw new Error("NO_BUCKET");
+    const t=JSON.stringify(put.obj||{});
+    const low=t.toLowerCase();
+    if(t.includes("Bucket not found")||put.status===404) throw new Error("NO_BUCKET");
     if(put.status===413||low.includes("too large")||low.includes("maximum allowed size")||low.includes("payload")) throw new Error("TOO_LARGE");
-    throw new Error(putText.slice(0,180)||"upload failed");
+    throw new Error((put.obj&&put.obj.error)||t.slice(0,180)||"upload failed");
   }
-  const sign=await fetch(CFG.supabaseURL+"/storage/v1/object/sign/covers/"+path,{
-    method:"POST",
-    headers:{apikey:CFG.supabaseAnonKey,Authorization:"Bearer "+S.accessToken,"Content-Type":"application/json"},
-    body:JSON.stringify({expiresIn:86400}),
-  });
-  const so=await sign.json();
+  const sign=await api("/storage/v1/object/sign/covers/"+path,{method:"POST",body:{expiresIn:86400}});
+  const so=sign.obj||{};
   const rel=so.signedURL||so.signedUrl;
   if(!rel) throw new Error("Could not sign clip");
   return CFG.supabaseURL+"/storage/v1"+(rel.startsWith("/")?rel:"/"+rel);

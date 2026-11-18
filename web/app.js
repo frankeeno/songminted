@@ -23,7 +23,7 @@ const S = {
   prompt: "", title: "", lyrics: "", writing: false, instrumental: false,
   genre: "", mood: "", voice: "", tempo: "",
   audioWeight: 0.9, styleWeight: 0.55, weirdness: 0.08,
-  audioB64: null, audioUrl: null, photoURL: null, sourceDuration: 0,
+  audioB64: null, audioUrl: null, photoURL: null, sourceDuration: 0, audioPreparing: false, audioError: "",
   coins: 3, isPro: localStorage.getItem("is_pro") === "true",
   userId: localStorage.getItem("sb_user_id"),
   accessToken: localStorage.getItem("sb_access_token"),
@@ -60,7 +60,7 @@ async function api(path,{method="GET",body,query,rawB64,contentType,upsert}={}){
       if(wrap && typeof wrap.status==="number") return wrap;
       return {ok:res.ok,status:res.status,obj:wrap};
     }
-  }catch(e){ /* preview without proxy — fall through */ }
+  }catch(e){ throw new Error("Request could not be confirmed. Do not resubmit generation automatically. "+(e.message||e)); }
   let url=CFG.supabaseURL+path;
   if(query) url+=(url.includes("?")?"&":"?")+new URLSearchParams(query);
   const headers={apikey:CFG.supabaseAnonKey,Authorization:"Bearer "+(S.accessToken||CFG.supabaseAnonKey),"Content-Type":contentType||"application/json"};
@@ -178,7 +178,7 @@ function studio(){
 
 function coverKnobs(){
   return `<div class="fine card" style="margin:16px 0">
-      <p class="muted" style="margin:0 0 10px">High audio = hear melody, harmony and lyrics from the file (any language). Low weirdness = stay faithful.</p>
+      <p class="muted" style="margin:0 0 10px">Audio influence guides the reference; style influence guides your requested style. These controls do not guarantee identical words or vocals.</p>
       <div class="row"><span>Audio influence</span><b>${Math.round(S.audioWeight*100)}%</b></div>
       <input type="range" min="0" max="1" step="0.01" value="${S.audioWeight}" oninput="S.audioWeight=+this.value;render()">
       <div class="row"><span>Style influence</span><b>${Math.round(S.styleWeight*100)}%</b></div>
@@ -189,15 +189,11 @@ function coverKnobs(){
 }
 function cover(){
   return `<h1 class="h-title">${tr("tab_cover")}</h1>
-    <p class="muted">Like Suno: the model hears the reference and sings those lyrics in the original language. Paste only if you want to override.</p>
+    <p class="muted">Cover uses your uploaded recording. Upload must finish successfully before generation can start. Exact lyric and duration fidelity still need listening tests.</p>
     <div class="inputbox" style="margin:12px 0"><input type="text" placeholder="Optional style only (e.g. warmer vocal, same arrangement)" value="${esc(S.prompt)}" oninput="S.prompt=this.value"></div>
     <label class="upload">${(S.audioB64||S.audioUrl)?tr("clip_ready"):tr("upload_audio")}
       <input type="file" accept="audio/*,video/mp4,video/quicktime,.mp4,.m4a,.wav,.mp3" class="hidden" onchange="onAudio(this)"></label>
-    <details class="card" style="margin:12px 0">
-      <summary style="cursor:pointer;font-weight:800">Override lyrics (optional)</summary>
-      <p class="muted" style="margin:8px 0">Leave empty so the cover sings what it hears. Paste only to force different words.</p>
-      <textarea placeholder="Optional override…" oninput="S.lyrics=this.value">${esc(S.lyrics)}</textarea>
-    </details>
+    <p role="status">${S.audioPreparing?"Uploading reference…":S.audioError?esc(S.audioError):S.audioUrl?"Reference ready · "+Math.round(S.sourceDuration)+" seconds":"No reference uploaded"}</p>
     ${coverKnobs()}
     <button class="btn gold" style="width:100%;margin-top:12px" onclick="mintCover()">◆ ${tr("tab_cover")} · 1 ●</button>`;
 }
@@ -419,7 +415,7 @@ async function uploadCoverBytes(bytes, mime, ext){
   if(!S.userId) throw new Error("Sign-in failed");
   const path=S.userId+"/"+uid()+"."+ext;
   const u8=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
-  const put=await api("/storage/v1/object/covers/"+path,{method:"POST",rawB64:wavToB64(u8),contentType:mime,upsert:true});
+  const put=await api("/storage/v1/object/covers/"+path,{method:"POST",rawB64:wavToB64(u8),contentType:mime});
   if(!put.ok){
     const t=JSON.stringify(put.obj||{});
     const low=t.toLowerCase();
@@ -434,44 +430,32 @@ async function uploadCoverBytes(bytes, mime, ext){
   return CFG.supabaseURL+"/storage/v1"+(rel.startsWith("/")?rel:"/"+rel);
 }
 window.onAudio=async(inp)=>{
-  const f=inp.files&&inp.files[0]; if(!f) return;
-  toast("Reading clip…");
-  S.audioB64=null; S.audioUrl=null;
-  let decoded=null;
+  const f=inp.files&&inp.files[0]; if(!f || S.audioPreparing) return;
+  S.audioB64=null; S.audioUrl=null; S.sourceDuration=0; S.audioError="";
+  S.audioPreparing=true; render();
+  let ctx;
   try{
-    const meta=extFor(f);
-    const isVideo=/video|mp4|quicktime/i.test(f.type+" "+f.name);
+    if(f.size>50*1024*1024) throw new Error("Source exceeds 50 MB. Export the full song as MP3 or M4A; it will not be trimmed.");
     const buf=await f.arrayBuffer();
-    const ctx=new (window.AudioContext||window.webkitAudioContext)();
-    decoded=await ctx.decodeAudioData(buf.slice(0));
-    await ctx.close();
-    S.sourceDuration=decoded.duration||0;
-    const full=encodeWavMono(decoded, Math.min(240, Math.ceil(S.sourceDuration)+1), 16000);
-    let uploaded=false;
-    if(!isVideo && f.size<=12*1024*1024){
-      try{
-        S.audioUrl=await uploadCoverBytes(new Uint8Array(buf), meta.mime, meta.ext);
-        uploaded=true;
-        toast(tr("clip_ready")+" · "+Math.round(S.sourceDuration)+"s original");
-      }catch(e){ if(String(e.message)==="NO_BUCKET") throw e; }
-    }
-    if(!uploaded){
-      S.audioUrl=await uploadCoverBytes(full, "audio/wav", "wav");
-      toast(tr("clip_ready")+" · "+Math.min(240, Math.round(S.sourceDuration))+"s audio");
-    }
-    S.audioB64=null;
+    ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const decoded=await ctx.decodeAudioData(buf.slice(0));
+    S.sourceDuration=decoded.duration;
+    if(!Number.isFinite(decoded.duration)||decoded.duration<=0) throw new Error("No readable audio found.");
+    const original=/\.(mp3|m4a|wav)$/i.test(f.name||"");
+    const meta=original?extFor(f):{mime:"audio/wav",ext:"wav"};
+    // No 45/60/120/240-second truncation and no silent short-clip fallback.
+    const bytes=original?new Uint8Array(buf):encodeWavMono(decoded, decoded.duration, 16000);
+    if(bytes.byteLength>50*1024*1024) throw new Error("Extracted audio exceeds 50 MB. Export the full song as MP3 or M4A.");
+    S.audioUrl=await uploadCoverBytes(bytes,meta.mime,meta.ext);
+    toast("Reference uploaded · "+Math.round(decoded.duration)+" seconds");
   }catch(e){
-    const msg=String(e.message||e);
-    if(decoded){
-      S.audioB64=wavToB64(encodeWavMono(decoded, 45));
-      S.audioUrl=null;
-      toast(msg==="TOO_LARGE"?"File was too big. Using first 45s.":tr("clip_ready")+" (45s)");
-    }else{
-      S.audioB64=null; S.audioUrl=null;
-      toast(msg==="TOO_LARGE"?"File too large. Use an mp3/m4a under 12MB.":"Couldn't read that file. Use mp3 or m4a.");
-    }
+    S.audioB64=null; S.audioUrl=null;
+    S.audioError="Reference upload failed: "+(e.message||String(e))+" No cover will be submitted.";
+    toast(S.audioError);
+  }finally{
+    if(ctx) await ctx.close().catch(()=>{});
+    S.audioPreparing=false; render();
   }
-  render();
 };
 window.onPhoto=(inp)=>{ const f=inp.files&&inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ S.photoURL=r.result; toast(tr("change_photo")); render(); }; r.readAsDataURL(f); };
 
@@ -487,25 +471,16 @@ window.writeLyrics=async()=>{
   S.writing=false; render();
 };
 
-window.writeCoverLyrics=async()=>{
-  if(S.writing) return; S.writing=true; render();
-  try{
-    await signInAnon();
-    const idea="Trascrivi in ITALIANO le parole originali del brano. Non tradurre in inglese. Testo fedele.";
-    const r=await api("/functions/v1/mint",{method:"POST",body:{action:"lyrics",prompt:idea,language:"Italian"}});
-    if(r.obj.lyrics){ S.lyrics=r.obj.lyrics; if(!S.title&&r.obj.title) S.title=r.obj.title; toast("Testo (da rivedere)"); }
-    else toast(r.obj.error||"lyrics failed");
-  }catch(e){ toast(e.message); }
-  S.writing=false; render();
-};
 window.mintCover=()=>{
   if(!(S.audioB64||S.audioUrl)){ toast("Upload the original first"); return; }
   mint();
 };
 window.mint=async()=>{
-  const g=S.genre||"Pop", m=S.mood||"Happy";
-  const isCover=!!(S.audioB64||S.audioUrl);
-  if(isCover && S.audioWeight<0.5) S.audioWeight=0.85;
+  if(S.generating) return;
+  if(S.audioPreparing || S.audioError){ toast(S.audioError||"Wait for reference upload to finish"); return; }
+  const isCover=S.tab==="cover"||!!(S.audioB64||S.audioUrl);
+  if(isCover && !(S.audioB64||S.audioUrl)){ toast("Upload the original first"); return; }
+  const g=S.genre||(isCover?"":"Pop"), m=S.mood||(isCover?"":"Happy");
   const title=(S.title||"").trim()||(titleA[Math.floor(Math.random()*6)]+" "+titleB[Math.floor(Math.random()*6)]);
   S.generating=true; S.progress=8; S.genLbl=isCover?"Covering your track…":"…"; S.showPlayer=false; render();
   try{
@@ -530,6 +505,7 @@ window.mint=async()=>{
     const start=await api("/functions/v1/mint",{method:"POST",body});
     if(start.obj.paywall){ S.generating=false; S.screen="paywall"; render(); return; }
     const jobId=start.obj.jobId; if(!jobId) throw new Error(start.obj.error||start.obj.detail||start.obj.message||("mint failed ("+start.status+")"));
+    if(isCover && (start.obj.kind!=="cover" || start.obj.referenceAccepted!==true)) throw new Error("Backend did not confirm the reference. Do not retry; report job "+jobId);
     const results=await pollJob(jobId);
     results.forEach((v,i)=>{
       S.library.unshift({
@@ -541,11 +517,9 @@ window.mint=async()=>{
       });
     });
     saveLib(); S.current=S.library[0];
-    const longCover=isCover && S.sourceDuration>150;
     S.audioB64=null; S.audioUrl=null;
     await refreshCredits();
     S.generating=false; S.progress=100; S.showPlayer=true; playAudio(S.current); render();
-    if(longCover) toast("If this take is short, use Extend on the player for the rest (1 credit).");
   }catch(e){ S.generating=false; toast(e.message||String(e)); render(); }
 };
 

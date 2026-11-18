@@ -1,0 +1,9 @@
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+let src=fs.readFileSync(require('node:path').join(__dirname,'../web/app.js'),'utf8');src=src.slice(0,src.lastIndexOf('(async()=>'));
+const c={console,localStorage:{getItem:()=>null,setItem:()=>{}},document:{getElementById:()=>null},crypto:require('node:crypto').webcrypto,window:{},setTimeout,clearTimeout,TextDecoder,Uint8Array,Int16Array,Float32Array,ArrayBuffer,DataView,URL,URLSearchParams,btoa,atob};c.window=c;vm.createContext(c);vm.runInContext(src,c);
+(async()=>{
+ await vm.runInContext(`(async()=>{render=()=>{};toast=()=>{};let calls=0;api=async()=>{calls++;return {obj:{}}};S.tab='cover';await mint();if(calls!==0)throw Error('missing-reference charged');S.audioError='upload failed';S.audioUrl='test';await mint();if(calls!==0)throw Error('failed upload charged');S.audioError='';S.audioPreparing=true;await mint();if(calls!==0)throw Error('pending upload charged');S.audioPreparing=false;})()`,c);
+ c.originalBytes=new Uint8Array(2900000);c.mockDuration=300.25;
+ await vm.runInContext(`(async()=>{AudioContext=class{async decodeAudioData(){return {duration:mockDuration}}async close(){}};let received=0;uploadCoverBytes=async(bytes)=>{received=bytes.length;return 'stored-url'};await onAudio({files:[{name:'original.m4a',size:originalBytes.length,type:'audio/mp4',arrayBuffer:async()=>originalBytes.buffer}]});if(received!==2900000||S.sourceDuration!==300.25||S.audioB64!==null||S.audioUrl!=='stored-url')throw Error('original changed');uploadCoverBytes=async()=>{throw Error('test rejection')};await onAudio({files:[{name:'original.m4a',size:originalBytes.length,type:'audio/mp4',arrayBuffer:async()=>originalBytes.buffer}]});if(S.audioUrl||S.audioB64||!S.audioError)throw Error('silent fallback');})()`,c);
+ console.log('PASS: missing/pending/failed reference blocked; complete 2.9 MB M4A preserved; no short-clip fallback.');
+})().catch(e=>{console.error(e);process.exit(1)});

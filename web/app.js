@@ -57,9 +57,9 @@ async function api(path,{method="GET",body,query}={}){
   const headers={apikey:CFG.supabaseAnonKey,Authorization:"Bearer "+(S.accessToken||CFG.supabaseAnonKey),"Content-Type":"application/json"};
   let res;
   try{
-    res=await fetch(url,{method,headers,body:body?JSON.stringify(body):undefined});
+    res=await fetch(url,{method,headers,body:body?JSON.stringify(body):undefined,mode:"cors"});
   }catch(e){
-    throw new Error("Network failed. If this was a Cover, the clip was probably too large. Use a short mp3/m4a.");
+    throw new Error("Can't reach Supabase ("+(e.message||"blocked")+"). Not a file-size issue at 3MB.");
   }
   const text=await res.text();
   let obj={}; try{ obj=text?JSON.parse(text):{}; }catch{ obj={error:text||res.statusText}; }
@@ -491,7 +491,8 @@ window.mint=async()=>{
     };
     if(!S.instrumental&&S.lyrics) body.lyrics=S.lyrics;
     if(S.audioUrl) body.audioUrl=S.audioUrl;
-    else if(S.audioB64) body.audioBase64=S.audioB64;
+    else if(S.audioB64 && S.audioB64.length<400000) body.audioBase64=S.audioB64;
+    else if(S.audioB64) throw new Error("Cover clip is ready locally but Storage upload failed, so it was not sent. Try mp3/m4a again after a refresh.");
     const start=await api("/functions/v1/mint",{method:"POST",body});
     if(start.obj.paywall){ S.generating=false; S.screen="paywall"; render(); return; }
     const jobId=start.obj.jobId; if(!jobId) throw new Error(start.obj.error||start.obj.detail||start.obj.message||("mint failed ("+start.status+")"));
